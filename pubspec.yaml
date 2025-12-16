@@ -1,5 +1,5 @@
 name: diabetes_app
-description: A new Flutter project.
+description: Aplicativo mobile Flutter para controle de diabetes.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,8 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Backend
   supabase_flutter: ^2.0.0
   flutter_dotenv: ^5.1.0
+  
+  # UI (From Remote)
+  cupertino_icons: ^1.0.6
+  forui: ^0.16.0
 
 dev_dependencies:
   flutter_test:

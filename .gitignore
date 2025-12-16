@@ -8,12 +8,24 @@
 .buildlog/
 .history
 .svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
 
 # Flutter/Dart/Pub
 .dart_tool/
 .packages
 .pub/
 build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+
+# iOS/Android Build
 ios/Flutter/App.framework
 ios/Flutter/Flutter.framework
 ios/Flutter/Generated.xcconfig
@@ -25,6 +37,13 @@ ios/Runner/GeneratedPluginRegistrant.*
 android/Flutter/build/
 android/app/libs/
 android/app/src/main/assets/
+android/app/debug
+android/app/profile
+android/app/release
 
-# Secrets
+# Symbols/Obfuscation
+app.*.symbols
+app.*.map.json
+
+# Secrets (CRITICAL)
 .env

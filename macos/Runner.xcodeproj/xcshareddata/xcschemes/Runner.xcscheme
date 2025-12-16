@@ -15,7 +15,11 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
                BuildableName = "diabetes_app.app"
+=======
+               BuildableName = "front_p1.app"
+>>>>>>> 019d50d8093efe7aa2f12ba2381b6f8544cc98a0
                BlueprintName = "Runner"
                ReferencedContainer = "container:Runner.xcodeproj">
             </BuildableReference>
@@ -31,7 +35,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "diabetes_app.app"
+=======
+            BuildableName = "front_p1.app"
+>>>>>>> 019d50d8093efe7aa2f12ba2381b6f8544cc98a0
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
@@ -66,7 +74,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "diabetes_app.app"
+=======
+            BuildableName = "front_p1.app"
+>>>>>>> 019d50d8093efe7aa2f12ba2381b6f8544cc98a0
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
@@ -83,7 +95,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "diabetes_app.app"
+=======
+            BuildableName = "front_p1.app"
+>>>>>>> 019d50d8093efe7aa2f12ba2381b6f8544cc98a0
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>

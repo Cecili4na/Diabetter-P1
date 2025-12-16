@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:forui/forui.dart';
 import 'screens/login_screen.dart';
-// import 'screens/home_screen.dart'; // TODO: Create Home Screen
+import 'screens/home_screen.dart';
 
 void main() async {
   try {
@@ -29,9 +30,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Diabetter',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+      // Wrap in FAnimatedTheme for ForUI support
+      builder: (context, child) => FAnimatedTheme(
+        data: FThemes.zinc.light,
+        child: child!,
       ),
       home: const AuthGate(),
     );
@@ -48,24 +50,10 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         final session = snapshot.data?.session;
 
-        // If session exists, user is logged in
         if (session != null) {
-          // PROVISIONARY: Just show a text until we build Home
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Home Request'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () => Supabase.instance.client.auth.signOut(),
-                )
-              ],
-            ),
-            body: const Center(child: Text('Welcome! You are logged in.')),
-          );
+          return const HomeScreen();
         }
 
-        // Otherwise, show Login
         return const LoginScreen();
       },
     );
