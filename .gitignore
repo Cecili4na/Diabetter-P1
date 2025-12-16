@@ -1,0 +1,30 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+.pub/
+build/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+android/Flutter/build/
+android/app/libs/
+android/app/src/main/assets/
+
+# Secrets
+.env
