@@ -1,0 +1,301 @@
+// lib/services/export_service.dart
+// RF-10: Export data as PDF
+
+import 'dart:io';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
+
+import '../repositories/repository_interfaces.dart';
+import '../repositories/health_repository.dart';
+import '../repositories/plano_repository.dart';
+import '../models/models.dart';
+import '../models/event_record.dart';
+import 'charts_service.dart';
+
+/// PDF Export Service (RF-10)
+class ExportService {
+  final IHealthRepository _healthRepo;
+  final IPlanoRepository _planoRepo;
+  final ChartsService _chartsService;
+
+  ExportService({
+    IHealthRepository? healthRepo,
+    IPlanoRepository? planoRepo,
+    ChartsService? chartsService,
+  })  : _healthRepo = healthRepo ?? HealthRepository(),
+        _planoRepo = planoRepo ?? PlanoRepository(),
+        _chartsService = chartsService ?? ChartsService();
+
+  final _dateFormat = DateFormat('dd/MM/yyyy');
+  final _timeFormat = DateFormat('HH:mm');
+  final _dateTimeFormat = DateFormat('dd/MM/yyyy HH:mm');
+
+  /// Export user data to PDF file
+  Future<File> exportToPdf({
+    required DateTime from,
+    required DateTime to,
+    required String userName,
+  }) async {
+    // Check freemium limits
+    final canExport = await _planoRepo.canExport();
+    if (!canExport) {
+      throw Exception('Limite de exportações atingido. Faça upgrade para continuar.');
+    }
+
+    // Fetch all data
+    final glucoseRecords = await _healthRepo.getGlucoseRecords(from: from, to: to);
+    final insulinRecords = await _healthRepo.getInsulinRecords(from: from, to: to);
+    final eventRecords = await _healthRepo.getEventRecords(from: from, to: to);
+    final summary = await _chartsService.getPeriodSummary(from: from, to: to);
+    final timeInRange = await _chartsService.getTimeInRange(from: from, to: to);
+
+    // Build PDF
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader(userName, from, to),
+        footer: (context) => _buildFooter(context),
+        build: (context) => [
+          _buildSummarySection(summary, timeInRange),
+          pw.SizedBox(height: 20),
+          _buildGlucoseSection(glucoseRecords),
+          pw.SizedBox(height: 20),
+          _buildInsulinSection(insulinRecords),
+          pw.SizedBox(height: 20),
+          _buildEventsSection(eventRecords),
+        ],
+      ),
+    );
+
+    // Save to file
+    final output = await getTemporaryDirectory();
+    final fileName = 'diabetter_${_dateFormat.format(from).replaceAll('/', '-')}_${_dateFormat.format(to).replaceAll('/', '-')}.pdf';
+    final file = File('${output.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
+
+    // Increment export counter for freemium
+    await _planoRepo.incrementExportCount();
+
+    return file;
+  }
+
+  /// Share the exported PDF
+  Future<void> sharePdf(File file) async {
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      subject: 'Relatório Diabetter',
+      text: 'Aqui está meu relatório do Diabetter.',
+    );
+  }
+
+  // Private helper methods for PDF building
+
+  pw.Widget _buildHeader(String userName, DateTime from, DateTime to) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(bottom: 20),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Diabetter',
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.blue800,
+                ),
+              ),
+              pw.Text(
+                'Relatório de Acompanhamento',
+                style: const pw.TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text('Paciente: $userName'),
+              pw.Text('Período: ${_dateFormat.format(from)} - ${_dateFormat.format(to)}'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildFooter(pw.Context context) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(top: 10),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            'Gerado por Diabetter em ${_dateTimeFormat.format(DateTime.now())}',
+            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+          ),
+          pw.Text(
+            'Página ${context.pageNumber} de ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 10),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildSummarySection(PeriodSummary summary, TimeInRange tir) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.blue50,
+        borderRadius: pw.BorderRadius.circular(8),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Resumo do Período',
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatBox('Glicemia Média', 
+                summary.glucoseAverage?.toStringAsFixed(0) ?? '-', 'mg/dL'),
+              _buildStatBox('Mínima', 
+                summary.glucoseMin?.toStringAsFixed(0) ?? '-', 'mg/dL'),
+              _buildStatBox('Máxima', 
+                summary.glucoseMax?.toStringAsFixed(0) ?? '-', 'mg/dL'),
+              _buildStatBox('Tempo no Alvo', 
+                '${tir.inRangePercent.toStringAsFixed(0)}%', ''),
+            ],
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatBox('Registros Glicemia', '${summary.glucoseCount}', ''),
+              _buildStatBox('Aplicações Insulina', '${summary.insulinCount}', ''),
+              _buildStatBox('Total Insulina', 
+                summary.insulinTotalUnits?.toStringAsFixed(1) ?? '0', 'un'),
+              _buildStatBox('Eventos', '${summary.eventsCount}', ''),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildStatBox(String label, String value, String unit) {
+    return pw.Column(
+      children: [
+        pw.Text(
+          value,
+          style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+        ),
+        if (unit.isNotEmpty) pw.Text(unit, style: const pw.TextStyle(fontSize: 10)),
+        pw.Text(label, style: const pw.TextStyle(fontSize: 10)),
+      ],
+    );
+  }
+
+  pw.Widget _buildGlucoseSection(List<GlucoseRecord> records) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Registros de Glicemia',
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 5),
+        if (records.isEmpty)
+          pw.Text('Nenhum registro no período.')
+        else
+          pw.TableHelper.fromTextArray(
+            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+            cellPadding: const pw.EdgeInsets.all(5),
+            data: [
+              ['Data', 'Hora', 'Valor (mg/dL)', 'Notas'],
+              ...records.map((r) => [
+                _dateFormat.format(r.timestamp),
+                _timeFormat.format(r.timestamp),
+                r.quantity.toStringAsFixed(0),
+                r.notas ?? '',
+              ]),
+            ],
+          ),
+      ],
+    );
+  }
+
+  pw.Widget _buildInsulinSection(List<InsulinRecord> records) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Registros de Insulina',
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 5),
+        if (records.isEmpty)
+          pw.Text('Nenhum registro no período.')
+        else
+          pw.TableHelper.fromTextArray(
+            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+            cellPadding: const pw.EdgeInsets.all(5),
+            data: [
+              ['Data', 'Hora', 'Dose (un)', 'Tipo', 'Local'],
+              ...records.map((r) => [
+                _dateFormat.format(r.timestamp),
+                _timeFormat.format(r.timestamp),
+                r.quantity.toStringAsFixed(1),
+                r.type ?? '-',
+                r.bodyPart ?? '-',
+              ]),
+            ],
+          ),
+      ],
+    );
+  }
+
+  pw.Widget _buildEventsSection(List<EventRecord> records) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Eventos',
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 5),
+        if (records.isEmpty)
+          pw.Text('Nenhum evento no período.')
+        else
+          pw.TableHelper.fromTextArray(
+            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+            cellPadding: const pw.EdgeInsets.all(5),
+            data: [
+              ['Data', 'Hora', 'Tipo', 'Título', 'Descrição'],
+              ...records.map((r) => [
+                _dateFormat.format(r.horario),
+                _timeFormat.format(r.horario),
+                r.tipoEvento.displayName,
+                r.titulo,
+                r.descricao ?? '',
+              ]),
+            ],
+          ),
+      ],
+    );
+  }
+}

@@ -3,17 +3,28 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:forui/forui.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/app_shell.dart';
+import 'config/app_config.dart';
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    await dotenv.load(fileName: ".env");
-
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? '',
-      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-    );
+    
+    // Initialize app config from environment
+    // Run with: flutter run --dart-define=MOCK_MODE=true
+    AppConfig.initializeFromEnvironment();
+    
+    if (AppConfig.isMockMode) {
+      // Skip Supabase in mock mode
+      print('🧪 Running in MOCK MODE - no Supabase connection');
+    } else {
+      // Production mode - initialize Supabase
+      await dotenv.load(fileName: ".env");
+      await Supabase.initialize(
+        url: dotenv.env['SUPABASE_URL'] ?? '',
+        anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+      );
+    }
 
     runApp(const MyApp());
   } catch (e, stack) {
@@ -45,13 +56,19 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // In mock mode, skip Supabase auth and go directly to home
+    if (AppConfig.isMockMode) {
+      return const AppShell();
+    }
+
+    // Production mode - use Supabase auth state
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
         final session = snapshot.data?.session;
 
         if (session != null) {
-          return const HomeScreen();
+          return const AppShell();
         }
 
         return const LoginScreen();

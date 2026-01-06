@@ -5,6 +5,9 @@ class UserProfile {
   final String? email;
   final String? tipoDiabetes;
   final bool termosAceitos;
+  final List<String> horariosMedicao;  // RF-03: measurement times
+  final Map<String, dynamic> metas;     // RF-03: {min, max, alvo}
+  final String unidadeGlicemia;         // mg/dL or mmol/L
 
   UserProfile({
     required this.id,
@@ -12,6 +15,9 @@ class UserProfile {
     this.email,
     this.tipoDiabetes,
     this.termosAceitos = false,
+    this.horariosMedicao = const [],
+    this.metas = const {'min': 70, 'max': 180, 'alvo': 100},
+    this.unidadeGlicemia = 'mg/dL',
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -21,6 +27,12 @@ class UserProfile {
       email: json['email'],
       tipoDiabetes: json['tipo_diabetes'],
       termosAceitos: json['termos_aceitos'] ?? false,
+      horariosMedicao: (json['horarios_medicao'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList() ?? [],
+      metas: (json['metas'] as Map<String, dynamic>?) ?? 
+          {'min': 70, 'max': 180, 'alvo': 100},
+      unidadeGlicemia: json['unidade_glicemia'] ?? 'mg/dL',
     );
   }
 
@@ -31,9 +43,34 @@ class UserProfile {
       'email': email,
       'tipo_diabetes': tipoDiabetes,
       'termos_aceitos': termosAceitos,
+      'horarios_medicao': horariosMedicao,
+      'metas': metas,
+      'unidade_glicemia': unidadeGlicemia,
     };
   }
+
+  UserProfile copyWith({
+    String? nome,
+    String? email,
+    String? tipoDiabetes,
+    bool? termosAceitos,
+    List<String>? horariosMedicao,
+    Map<String, dynamic>? metas,
+    String? unidadeGlicemia,
+  }) {
+    return UserProfile(
+      id: id,
+      nome: nome ?? this.nome,
+      email: email ?? this.email,
+      tipoDiabetes: tipoDiabetes ?? this.tipoDiabetes,
+      termosAceitos: termosAceitos ?? this.termosAceitos,
+      horariosMedicao: horariosMedicao ?? this.horariosMedicao,
+      metas: metas ?? this.metas,
+      unidadeGlicemia: unidadeGlicemia ?? this.unidadeGlicemia,
+    );
+  }
 }
+
 
 // lib/models/insulin_record.dart
 class InsulinRecord {
@@ -82,12 +119,14 @@ class GlucoseRecord {
   final String userId;
   final double quantity; // mg/dL
   final DateTime timestamp;
+  final String? notas;  // RF-04: optional notes
 
   GlucoseRecord({
     this.id,
     required this.userId,
     required this.quantity,
     required this.timestamp,
+    this.notas,
   });
 
   factory GlucoseRecord.fromJson(Map<String, dynamic> json) {
@@ -96,6 +135,7 @@ class GlucoseRecord {
       userId: json['user_id'],
       quantity: (json['quantidade'] as num).toDouble(),
       timestamp: DateTime.parse(json['horario']),
+      notas: json['notas'],
     );
   }
 
@@ -104,6 +144,8 @@ class GlucoseRecord {
       'user_id': userId,
       'quantidade': quantity,
       'horario': timestamp.toIso8601String(),
+      'notas': notas,
     };
   }
 }
+

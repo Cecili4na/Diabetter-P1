@@ -1,8 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../models/models.dart';
+import 'repository_interfaces.dart';
 
-class AuthRepository {
+class AuthRepository implements IAuthRepository {
   final SupabaseClient _client = SupabaseService().client;
 
   // Login
@@ -49,12 +50,16 @@ class AuthRepository {
     return UserProfile.fromJson(data);
   }
   
-  // Update Profile
+  // Update Profile (RF-03 - Complete profile editing)
   Future<void> updateProfile(UserProfile profile) async {
-      await _client.from('profiles').update({
-          'tipo_diabetes': profile.tipoDiabetes,
-          'termos_aceitos': profile.termosAceitos,
-          // 'nome': profile.nome, // if editable
-      }).eq('id', profile.id);
+    await _client.from('profiles').update({
+      'nome': profile.nome,
+      'tipo_diabetes': profile.tipoDiabetes,
+      'termos_aceitos': profile.termosAceitos,
+      'horarios_medicao': profile.horariosMedicao,
+      'metas': profile.metas,
+      'unidade_glicemia': profile.unidadeGlicemia,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', profile.id);
   }
 }
