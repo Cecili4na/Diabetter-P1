@@ -69,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final now = DateTime.now();
       final from = now.subtract(const Duration(days: 30));
 
-      final file = await exportService.exportToPdf(
+      final filePath = await exportService.exportToPdf(
         from: from,
         to: now,
         userName: _profile?.nome ?? 'Usuário',
@@ -78,8 +78,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
 
-      // Share the PDF
-      await exportService.sharePdf(file);
+      // Share the PDF (on mobile) or just show success (on web, download already triggered)
+      await exportService.sharePdf(filePath);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

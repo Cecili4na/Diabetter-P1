@@ -1,12 +1,16 @@
 // lib/services/export_service.dart
 // RF-10: Export data as PDF
 
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
+
+// Conditional imports for platform-specific functionality
+import 'export_service_stub.dart'
+    if (dart.library.io) 'export_service_io.dart'
+    if (dart.library.html) 'export_service_web.dart' as platform;
 
 import '../repositories/repository_interfaces.dart';
 import '../repositories/health_repository.dart';
@@ -16,6 +20,7 @@ import '../models/event_record.dart';
 import 'charts_service.dart';
 
 /// PDF Export Service (RF-10)
+/// Supports both web (browser download) and mobile (file system)
 class ExportService {
   final IHealthRepository _healthRepo;
   final IPlanoRepository _planoRepo;
@@ -33,8 +38,10 @@ class ExportService {
   final _timeFormat = DateFormat('HH:mm');
   final _dateTimeFormat = DateFormat('dd/MM/yyyy HH:mm');
 
-  /// Export user data to PDF file
-  Future<File> exportToPdf({
+  /// Export user data to PDF
+  /// On web: triggers browser download
+  /// On mobile: returns file path and can share
+  Future<String> exportToPdf({
     required DateTime from,
     required DateTime to,
     required String userName,
@@ -73,25 +80,22 @@ class ExportService {
       ),
     );
 
-    // Save to file
-    final output = await getTemporaryDirectory();
+    // Generate PDF bytes
+    final Uint8List pdfBytes = await pdf.save();
     final fileName = 'diabetter_${_dateFormat.format(from).replaceAll('/', '-')}_${_dateFormat.format(to).replaceAll('/', '-')}.pdf';
-    final file = File('${output.path}/$fileName');
-    await file.writeAsBytes(await pdf.save());
+
+    // Use platform-specific save/download
+    final result = await platform.savePdf(pdfBytes, fileName);
 
     // Increment export counter for freemium
     await _planoRepo.incrementExportCount();
 
-    return file;
+    return result;
   }
 
-  /// Share the exported PDF
-  Future<void> sharePdf(File file) async {
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      subject: 'Relatório Diabetter',
-      text: 'Aqui está meu relatório do Diabetter.',
-    );
+  /// Share the exported PDF (mobile only, no-op on web)
+  Future<void> sharePdf(String filePath) async {
+    await platform.sharePdf(filePath);
   }
 
   // Private helper methods for PDF building
