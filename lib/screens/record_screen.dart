@@ -6,6 +6,7 @@ import '../config/app_theme.dart';
 import '../config/app_config.dart';
 import '../models/models.dart';
 import '../models/event_record.dart';
+import '../widgets/success_dialog.dart';
 
 class RecordScreen extends StatefulWidget {
   const RecordScreen({super.key});
@@ -32,7 +33,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightGrey,
+      backgroundColor: AppColors.lightBlue,
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
@@ -44,10 +45,19 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
           indicatorWeight: 3,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(icon: Icon(Icons.water_drop), text: 'Glicemia'),
-            Tab(icon: Icon(Icons.vaccines), text: 'Insulina'),
-            Tab(icon: Icon(Icons.event_note), text: 'Evento'),
+          tabs: [
+            Tab(
+              icon: Icon(Icons.water_drop, color: Colors.blue.shade200),
+              text: 'Glicemia',
+            ),
+            Tab(
+              icon: Icon(Icons.vaccines, color: Colors.orange.shade200),
+              text: 'Insulina',
+            ),
+            Tab(
+              icon: Icon(Icons.event_note, color: Colors.green.shade200),
+              text: 'Evento',
+            ),
           ],
         ),
       ),
@@ -80,9 +90,9 @@ class _GlucoseFormState extends State<_GlucoseForm> {
 
   Future<void> _submit() async {
     final value = double.tryParse(_valueController.text);
-    if (value == null || value <= 0) {
+    if (value == null || value < 40 || value > 600) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Digite um valor válido'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Digite um valor entre 40 e 600 mg/dL'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -90,6 +100,20 @@ class _GlucoseFormState extends State<_GlucoseForm> {
     setState(() => _isLoading = true);
 
     try {
+      // Check freemium limits
+      final canAdd = await AppConfig.instance.planoRepository.canAddRecord();
+      if (!canAdd) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Limite de registros atingido. Faça upgrade para continuar.'),
+              backgroundColor: AppColors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
       final record = GlucoseRecord(
         userId: 'mock-user',
         quantity: value,
@@ -98,13 +122,15 @@ class _GlucoseFormState extends State<_GlucoseForm> {
       );
 
       await AppConfig.instance.healthRepository.addGlucoseRecord(record);
+      
+      // Increment record counter for freemium tracking
+      await AppConfig.instance.planoRepository.incrementRecordCount();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Glicemia registrada!'),
-            backgroundColor: AppColors.green,
-          ),
+        await showSuccessDialog(
+          context,
+          title: 'Glicemia Registrada!',
+          message: '${value.toStringAsFixed(0)} mg/dL',
         );
         _valueController.clear();
         _notesController.clear();
@@ -215,9 +241,9 @@ class _InsulinFormState extends State<_InsulinForm> {
 
   Future<void> _submit() async {
     final units = double.tryParse(_unitsController.text);
-    if (units == null || units <= 0) {
+    if (units == null || units < 0.5 || units > 100) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Digite um valor válido'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Digite um valor entre 0.5 e 100 unidades'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -225,6 +251,20 @@ class _InsulinFormState extends State<_InsulinForm> {
     setState(() => _isLoading = true);
 
     try {
+      // Check freemium limits
+      final canAdd = await AppConfig.instance.planoRepository.canAddRecord();
+      if (!canAdd) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Limite de registros atingido. Faça upgrade para continuar.'),
+              backgroundColor: AppColors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
       final record = InsulinRecord(
         userId: 'mock-user',
         quantity: units,
@@ -234,13 +274,15 @@ class _InsulinFormState extends State<_InsulinForm> {
       );
 
       await AppConfig.instance.healthRepository.addInsulinRecord(record);
+      
+      // Increment record counter for freemium tracking
+      await AppConfig.instance.planoRepository.incrementRecordCount();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Insulina registrada!'),
-            backgroundColor: AppColors.green,
-          ),
+        await showSuccessDialog(
+          context,
+          title: 'Insulina Registrada!',
+          message: '${units.toStringAsFixed(1)} unidades de $_selectedType',
         );
         _unitsController.clear();
       }
@@ -366,6 +408,20 @@ class _EventFormState extends State<_EventForm> {
     setState(() => _isLoading = true);
 
     try {
+      // Check freemium limits
+      final canAdd = await AppConfig.instance.planoRepository.canAddRecord();
+      if (!canAdd) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Limite de registros atingido. Faça upgrade para continuar.'),
+              backgroundColor: AppColors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
       final record = EventRecord(
         userId: 'mock-user',
         titulo: _titleController.text,
@@ -375,13 +431,15 @@ class _EventFormState extends State<_EventForm> {
       );
 
       await AppConfig.instance.healthRepository.addEventRecord(record);
+      
+      // Increment record counter for freemium tracking
+      await AppConfig.instance.planoRepository.incrementRecordCount();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Evento registrado!'),
-            backgroundColor: AppColors.green,
-          ),
+        await showSuccessDialog(
+          context,
+          title: 'Evento Registrado!',
+          message: _titleController.text,
         );
         _titleController.clear();
         _descController.clear();

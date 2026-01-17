@@ -45,6 +45,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _exportData() async {
+    // Show period selector dialog
+    final selectedDays = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Período do Relatório'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Selecione o período de dados para o PDF:'),
+            const SizedBox(height: 16),
+            _buildPeriodOption(context, 7, 'Últimos 7 dias'),
+            _buildPeriodOption(context, 14, 'Últimos 14 dias'),
+            _buildPeriodOption(context, 30, 'Últimos 30 dias'),
+            _buildPeriodOption(context, 45, 'Últimos 45 dias'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCELAR'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedDays == null) return;
+
     // Show loading dialog
     showDialog(
       context: context,
@@ -67,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       final now = DateTime.now();
-      final from = now.subtract(const Duration(days: 30));
+      final from = now.subtract(Duration(days: selectedDays));
 
       final filePath = await exportService.exportToPdf(
         from: from,
@@ -104,10 +132,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Widget _buildPeriodOption(BuildContext context, int days, String label) {
+    return ListTile(
+      leading: Icon(Icons.calendar_today, color: AppColors.primaryBlue),
+      title: Text(label),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      onTap: () => Navigator.pop(context, days),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightGrey,
+      backgroundColor: AppColors.lightBlue,
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -348,11 +385,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             label: const Text('SAIR DA CONTA'),
             onPressed: () async {
               await AppConfig.instance.authRepository.signOut();
-              // In mock mode, just show a message
+              // Navigate to login and clear the navigation stack
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logout realizado (modo teste)')),
-                );
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
               }
             },
           ),

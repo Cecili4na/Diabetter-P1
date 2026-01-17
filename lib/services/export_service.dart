@@ -71,6 +71,8 @@ class ExportService {
         build: (context) => [
           _buildSummarySection(summary, timeInRange),
           pw.SizedBox(height: 20),
+          _buildGlucoseChart(glucoseRecords),
+          pw.SizedBox(height: 20),
           _buildGlucoseSection(glucoseRecords),
           pw.SizedBox(height: 20),
           _buildInsulinSection(insulinRecords),
@@ -207,6 +209,165 @@ class ExportService {
         ),
         if (unit.isNotEmpty) pw.Text(unit, style: const pw.TextStyle(fontSize: 10)),
         pw.Text(label, style: const pw.TextStyle(fontSize: 10)),
+      ],
+    );
+  }
+
+  pw.Widget _buildGlucoseChart(List<GlucoseRecord> records) {
+    if (records.isEmpty) {
+      return pw.Container();
+    }
+
+    // Sort records by timestamp and limit to 15 for readability
+    final sortedRecords = List<GlucoseRecord>.from(records)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final displayRecords = sortedRecords.length > 15 
+        ? sortedRecords.sublist(sortedRecords.length - 15)
+        : sortedRecords;
+
+    // Chart dimensions
+    const double chartWidth = 500;
+    const double chartHeight = 180;
+    const double leftPadding = 45;
+    const double bottomPadding = 35;
+    const double topPadding = 25;
+
+    // Find min/max values for scaling
+    final minValue = 40.0;
+    final maxValue = displayRecords.map((r) => r.quantity).reduce((a, b) => a > b ? a : b).clamp(180.0, 400.0);
+    final valueRange = maxValue - minValue;
+
+    // Time range
+    final startTime = displayRecords.first.timestamp;
+    final endTime = displayRecords.last.timestamp;
+    final timeRange = endTime.difference(startTime).inMinutes.toDouble();
+
+    // Convert data points to coordinates
+    List<PdfPoint> dataPoints = [];
+    for (final record in displayRecords) {
+      final xRatio = timeRange > 0 
+          ? record.timestamp.difference(startTime).inMinutes / timeRange
+          : 0.5;
+      final yRatio = (record.quantity - minValue) / valueRange;
+      
+      final x = leftPadding + xRatio * (chartWidth - leftPadding - 10);
+      final y = bottomPadding + yRatio * (chartHeight - bottomPadding - topPadding);
+      dataPoints.add(PdfPoint(x, y));
+    }
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Gráfico de Glicemia',
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Container(
+          height: chartHeight + 20,
+          width: chartWidth,
+          child: pw.Stack(
+            children: [
+              // Chart drawing
+              pw.CustomPaint(
+                size: PdfPoint(chartWidth, chartHeight),
+                painter: (canvas, size) {
+                  // Draw target range zone (70-180 mg/dL) - green
+                  final y70 = bottomPadding + ((70 - minValue) / valueRange) * (chartHeight - bottomPadding - topPadding);
+                  final y180 = bottomPadding + ((180 - minValue) / valueRange) * (chartHeight - bottomPadding - topPadding);
+                  
+                  canvas.drawRect(leftPadding, y70, chartWidth - leftPadding - 10, y180 - y70);
+                  canvas.setFillColor(PdfColors.green100);
+                  canvas.fillPath();
+
+                  // Draw axes
+                  canvas.setStrokeColor(PdfColors.grey600);
+                  canvas.setLineWidth(1);
+                  canvas.drawLine(leftPadding, bottomPadding, leftPadding, chartHeight - topPadding);
+                  canvas.drawLine(leftPadding, bottomPadding, chartWidth - 10, bottomPadding);
+                  canvas.strokePath();
+
+                  // Draw reference lines
+                  canvas.setStrokeColor(PdfColors.grey300);
+                  canvas.setLineWidth(0.5);
+                  canvas.drawLine(leftPadding, y70, chartWidth - 10, y70);
+                  canvas.drawLine(leftPadding, y180, chartWidth - 10, y180);
+                  canvas.strokePath();
+
+                  // Draw data lines
+                  if (dataPoints.length > 1) {
+                    canvas.setStrokeColor(PdfColors.blue700);
+                    canvas.setLineWidth(1.5);
+                    for (int i = 0; i < dataPoints.length - 1; i++) {
+                      canvas.drawLine(
+                        dataPoints[i].x, dataPoints[i].y,
+                        dataPoints[i + 1].x, dataPoints[i + 1].y,
+                      );
+                    }
+                    canvas.strokePath();
+                  }
+
+                  // Draw data points
+                  canvas.setFillColor(PdfColors.blue700);
+                  for (final point in dataPoints) {
+                    canvas.drawEllipse(point.x, point.y, 3, 3);
+                    canvas.fillPath();
+                  }
+                },
+              ),
+              // Y-axis labels
+              pw.Positioned(
+                left: 0,
+                bottom: bottomPadding + ((70 - minValue) / valueRange) * (chartHeight - bottomPadding - topPadding) - 5,
+                child: pw.Text('70', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+              ),
+              pw.Positioned(
+                left: 0,
+                bottom: bottomPadding + ((125 - minValue) / valueRange) * (chartHeight - bottomPadding - topPadding) - 5,
+                child: pw.Text('125', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+              ),
+              pw.Positioned(
+                left: 0,
+                bottom: bottomPadding + ((180 - minValue) / valueRange) * (chartHeight - bottomPadding - topPadding) - 5,
+                child: pw.Text('180', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+              ),
+              // Y-axis title
+              pw.Positioned(
+                left: 2,
+                top: 5,
+                child: pw.Text('mg/dL', style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
+              ),
+              // Data point values
+              ...List.generate(displayRecords.length, (i) {
+                return pw.Positioned(
+                  left: dataPoints[i].x - 8,
+                  bottom: dataPoints[i].y + 5,
+                  child: pw.Text(
+                    displayRecords[i].quantity.toStringAsFixed(0),
+                    style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.blue800),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        pw.SizedBox(height: 5),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Row(
+              children: [
+                pw.Container(width: 12, height: 12, color: PdfColors.green100),
+                pw.SizedBox(width: 4),
+                pw.Text('Alvo (70-180 mg/dL)', style: const pw.TextStyle(fontSize: 9)),
+              ],
+            ),
+            pw.Text(
+              'Período: ${_dateFormat.format(startTime)} - ${_dateFormat.format(endTime)}',
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+            ),
+          ],
+        ),
       ],
     );
   }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../config/app_config.dart';
 import '../services/charts_service.dart';
+import '../models/models.dart';
 
 class ChartsScreen extends StatefulWidget {
   const ChartsScreen({super.key});
@@ -21,6 +22,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
   PeriodSummary? _summary;
   TimeInRange? _timeInRange;
   List<DailyStats> _dailyStats = [];
+  List<GlucoseRecord> _glucoseRecords = [];
 
   @override
   void initState() {
@@ -40,12 +42,14 @@ class _ChartsScreenState extends State<ChartsScreen> {
         _chartsService.getPeriodSummary(from: from, to: now),
         _chartsService.getTimeInRange(from: from, to: now),
         _chartsService.getDailyStats(from: from, to: now),
+        AppConfig.instance.healthRepository.getGlucoseRecords(from: from, to: now),
       ]);
 
       setState(() {
         _summary = results[0] as PeriodSummary;
         _timeInRange = results[1] as TimeInRange;
         _dailyStats = results[2] as List<DailyStats>;
+        _glucoseRecords = results[3] as List<GlucoseRecord>;
         _isLoading = false;
       });
     } catch (e) {
@@ -56,7 +60,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightGrey,
+      backgroundColor: AppColors.lightBlue,
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
@@ -289,11 +293,31 @@ class _ChartsScreenState extends State<ChartsScreen> {
   }
 
   Widget _buildDailyChart() {
-    if (_dailyStats.isEmpty) {
-      return const SizedBox.shrink();
+    if (_glucoseRecords.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: AppDecorations.cardInfo,
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline, color: AppColors.primaryBlue),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Sem registros de glicemia no período selecionado',
+                style: AppTextStyles.body.copyWith(color: AppColors.darkBlue),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
-    final stats = _dailyStats.reversed.take(7).toList().reversed.toList();
+    // Sort by timestamp and take last 20 records for readability
+    final sortedRecords = List<GlucoseRecord>.from(_glucoseRecords)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final displayRecords = sortedRecords.length > 20 
+        ? sortedRecords.sublist(sortedRecords.length - 20)
+        : sortedRecords;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -301,15 +325,17 @@ class _ChartsScreenState extends State<ChartsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Médias Diárias', style: AppTextStyles.heading3),
+          Text('Registros de Glicemia', style: AppTextStyles.heading3),
+          const SizedBox(height: 4),
+          Text('(Últimos ${displayRecords.length} registros)', style: AppTextStyles.bodySmall),
           const SizedBox(height: 16),
           SizedBox(
             height: 180,
             child: CustomPaint(
               size: const Size(double.infinity, 180),
               painter: _LineChartPainter(
-                data: stats.map((s) => s.glucoseAverage ?? 0).toList(),
-                labels: stats.map((s) => '${s.date.day}/${s.date.month}').toList(),
+                data: displayRecords.map((r) => r.quantity).toList(),
+                labels: displayRecords.map((r) => '${r.timestamp.day}/${r.timestamp.month}').toList(),
                 lineColor: AppColors.primaryBlue,
                 pointColor: AppColors.primaryBlue,
                 gridColor: AppColors.lightGrey,
@@ -386,13 +412,48 @@ class _LineChartPainter extends CustomPainter {
       textPainter.paint(canvas, Offset(2, y - 6));
     }
 
-    // Draw target zone (70-180)
+    // Draw target zone (70-180) and danger zones
+    final y70 = paddingTop + chartHeight * (1 - (70 - adjustedMin) / (adjustedMax - adjustedMin));
+    final y180 = paddingTop + chartHeight * (1 - (180 - adjustedMin) / (adjustedMax - adjustedMin));
+    
+    // Low zone (below 70) - soft red
+    final lowZonePaint = Paint()
+      ..color = AppColors.red.withAlpha(25)
+      ..style = PaintingStyle.fill;
+    
+    if (y70 < size.height - paddingBottom) {
+      canvas.drawRect(
+        Rect.fromLTRB(
+          paddingLeft, 
+          y70.clamp(paddingTop, size.height - paddingBottom), 
+          size.width - paddingRight, 
+          size.height - paddingBottom
+        ),
+        lowZonePaint,
+      );
+    }
+    
+    // High zone (above 180) - soft red
+    final highZonePaint = Paint()
+      ..color = AppColors.red.withAlpha(25)
+      ..style = PaintingStyle.fill;
+    
+    if (y180 > paddingTop) {
+      canvas.drawRect(
+        Rect.fromLTRB(
+          paddingLeft, 
+          paddingTop, 
+          size.width - paddingRight, 
+          y180.clamp(paddingTop, size.height - paddingBottom)
+        ),
+        highZonePaint,
+      );
+    }
+    
+    // Target zone (70-180) - soft green
     final targetPaint = Paint()
       ..color = AppColors.green.withAlpha(30)
       ..style = PaintingStyle.fill;
-
-    final y70 = paddingTop + chartHeight * (1 - (70 - adjustedMin) / (adjustedMax - adjustedMin));
-    final y180 = paddingTop + chartHeight * (1 - (180 - adjustedMin) / (adjustedMax - adjustedMin));
     
     if (y70 > paddingTop && y180 < size.height - paddingBottom) {
       canvas.drawRect(

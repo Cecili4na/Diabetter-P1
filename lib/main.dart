@@ -46,6 +46,9 @@ class MyApp extends StatelessWidget {
         data: FThemes.zinc.light,
         child: child!,
       ),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+      },
       home: const AuthGate(),
     );
   }
