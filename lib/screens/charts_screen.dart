@@ -11,12 +11,12 @@ class ChartsScreen extends StatefulWidget {
   const ChartsScreen({super.key});
 
   @override
-  State<ChartsScreen> createState() => _ChartsScreenState();
+  ChartsScreenState createState() => ChartsScreenState();
 }
 
-class _ChartsScreenState extends State<ChartsScreen> {
+class ChartsScreenState extends State<ChartsScreen> {
   late final ChartsService _chartsService;
-  
+
   int _selectedDays = 7;
   bool _isLoading = true;
   PeriodSummary? _summary;
@@ -30,6 +30,9 @@ class _ChartsScreenState extends State<ChartsScreen> {
     _chartsService = ChartsService(healthRepo: AppConfig.instance.healthRepository);
     _loadData();
   }
+
+  /// Public method to refresh data (called by AppShell on tab change)
+  Future<void> refresh() => _loadData();
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);

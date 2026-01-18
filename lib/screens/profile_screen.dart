@@ -11,10 +11,10 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ProfileScreenState createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   UserProfile? _profile;
   Map<String, int>? _quota;
@@ -24,6 +24,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadProfile();
   }
+
+  /// Public method to refresh data (called by AppShell on tab change)
+  Future<void> refresh() => _loadProfile();
 
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);

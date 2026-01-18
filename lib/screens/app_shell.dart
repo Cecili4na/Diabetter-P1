@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
-import '../config/app_config.dart';
 import 'dashboard_screen.dart';
 import 'record_screen.dart';
 import 'charts_screen.dart';
@@ -19,12 +18,42 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    RecordScreen(),
-    ChartsScreen(),
-    ProfileScreen(),
-  ];
+  // GlobalKeys to access screen states for refresh
+  final _dashboardKey = GlobalKey<DashboardScreenState>();
+  final _chartsKey = GlobalKey<ChartsScreenState>();
+  final _profileKey = GlobalKey<ProfileScreenState>();
+
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      DashboardScreen(key: _dashboardKey),
+      const RecordScreen(),
+      ChartsScreen(key: _chartsKey),
+      ProfileScreen(key: _profileKey),
+    ];
+  }
+
+  void _onTabChanged(int newIndex) {
+    setState(() => _currentIndex = newIndex);
+
+    // Refresh data after the frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      switch (newIndex) {
+        case 0:
+          _dashboardKey.currentState?.refresh();
+          break;
+        case 2:
+          _chartsKey.currentState?.refresh();
+          break;
+        case 3:
+          _profileKey.currentState?.refresh();
+          break;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,9 +97,9 @@ class _AppShellState extends State<AppShell> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
-    
+
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => _onTabChanged(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

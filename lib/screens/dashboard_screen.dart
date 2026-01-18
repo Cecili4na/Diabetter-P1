@@ -12,13 +12,13 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  DashboardScreenState createState() => DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class DashboardScreenState extends State<DashboardScreen> {
   late final ChartsService _chartsService;
   late final PredictionsService _predictionsService;
-  
+
   bool _isLoading = true;
   PeriodSummary? _summary;
   TimeInRange? _timeInRange;
@@ -32,6 +32,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _predictionsService = PredictionsService(healthRepo: AppConfig.instance.healthRepository);
     _loadData();
   }
+
+  /// Public method to refresh data (called by AppShell on tab change)
+  Future<void> refresh() => _loadData();
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
