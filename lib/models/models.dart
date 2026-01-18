@@ -9,6 +9,18 @@ class UserProfile {
   final Map<String, dynamic> metas;     // RF-03: {min, max, alvo}
   final String unidadeGlicemia;         // mg/dL or mmol/L
 
+  // Novos campos - Onboarding essencial
+  final String unidadeA1c;              // '%' ou 'mmol/mol'
+  final String? tipoTratamento;         // 'insulina', 'comprimidos', 'ambos', 'nenhum'
+  final bool onboardingCompleto;
+
+  // Novos campos - Dados complementares
+  final DateTime? dataNascimento;
+  final double? altura;                 // cm
+  final double? peso;                   // kg
+  final String? sexo;                   // 'masculino', 'feminino', 'outro', 'prefiro_nao_informar'
+  final String? avatarUrl;              // URL da foto de perfil no Supabase Storage
+
   UserProfile({
     required this.id,
     this.nome,
@@ -18,6 +30,14 @@ class UserProfile {
     this.horariosMedicao = const [],
     this.metas = const {'min': 70, 'max': 180, 'alvo': 100},
     this.unidadeGlicemia = 'mg/dL',
+    this.unidadeA1c = '%',
+    this.tipoTratamento,
+    this.onboardingCompleto = false,
+    this.dataNascimento,
+    this.altura,
+    this.peso,
+    this.sexo,
+    this.avatarUrl,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -30,9 +50,19 @@ class UserProfile {
       horariosMedicao: (json['horarios_medicao'] as List<dynamic>?)
           ?.map((e) => e.toString())
           .toList() ?? [],
-      metas: (json['metas'] as Map<String, dynamic>?) ?? 
+      metas: (json['metas'] as Map<String, dynamic>?) ??
           {'min': 70, 'max': 180, 'alvo': 100},
       unidadeGlicemia: json['unidade_glicemia'] ?? 'mg/dL',
+      unidadeA1c: json['unidade_a1c'] ?? '%',
+      tipoTratamento: json['tipo_tratamento'],
+      onboardingCompleto: json['onboarding_completo'] ?? false,
+      dataNascimento: json['data_nascimento'] != null
+          ? DateTime.parse(json['data_nascimento'])
+          : null,
+      altura: json['altura'] != null ? (json['altura'] as num).toDouble() : null,
+      peso: json['peso'] != null ? (json['peso'] as num).toDouble() : null,
+      sexo: json['sexo'],
+      avatarUrl: json['avatar_url'],
     );
   }
 
@@ -46,6 +76,14 @@ class UserProfile {
       'horarios_medicao': horariosMedicao,
       'metas': metas,
       'unidade_glicemia': unidadeGlicemia,
+      'unidade_a1c': unidadeA1c,
+      'tipo_tratamento': tipoTratamento,
+      'onboarding_completo': onboardingCompleto,
+      'data_nascimento': dataNascimento?.toIso8601String().split('T').first,
+      'altura': altura,
+      'peso': peso,
+      'sexo': sexo,
+      'avatar_url': avatarUrl,
     };
   }
 
@@ -57,6 +95,14 @@ class UserProfile {
     List<String>? horariosMedicao,
     Map<String, dynamic>? metas,
     String? unidadeGlicemia,
+    String? unidadeA1c,
+    String? tipoTratamento,
+    bool? onboardingCompleto,
+    DateTime? dataNascimento,
+    double? altura,
+    double? peso,
+    String? sexo,
+    String? avatarUrl,
   }) {
     return UserProfile(
       id: id,
@@ -67,6 +113,14 @@ class UserProfile {
       horariosMedicao: horariosMedicao ?? this.horariosMedicao,
       metas: metas ?? this.metas,
       unidadeGlicemia: unidadeGlicemia ?? this.unidadeGlicemia,
+      unidadeA1c: unidadeA1c ?? this.unidadeA1c,
+      tipoTratamento: tipoTratamento ?? this.tipoTratamento,
+      onboardingCompleto: onboardingCompleto ?? this.onboardingCompleto,
+      dataNascimento: dataNascimento ?? this.dataNascimento,
+      altura: altura ?? this.altura,
+      peso: peso ?? this.peso,
+      sexo: sexo ?? this.sexo,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }

@@ -2,6 +2,7 @@
 // Dashboard/Home screen with glucose summary and quick actions
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../config/app_theme.dart';
 import '../config/app_config.dart';
 import '../models/models.dart';
@@ -26,6 +27,7 @@ class DashboardScreenState extends State<DashboardScreen> {
   TimeInRange? _timeInRange;
   GlucosePrediction? _prediction;
   String? _userName;
+  String? _avatarUrl;
 
   @override
   void initState() {
@@ -59,6 +61,7 @@ class DashboardScreenState extends State<DashboardScreen> {
         _prediction = results[2] as GlucosePrediction?;
         final profile = results[3] as UserProfile?;
         _userName = profile?.nome ?? 'Usuário';
+        _avatarUrl = profile?.avatarUrl;
         _isLoading = false;
       });
     } catch (e) {
@@ -117,12 +120,31 @@ class DashboardScreenState extends State<DashboardScreen> {
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
             ),
-            child: const Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 28,
+            child: ClipOval(
+              child: _avatarUrl != null
+                  ? CachedNetworkImage(
+                      imageUrl: _avatarUrl!,
+                      fit: BoxFit.cover,
+                      width: 50,
+                      height: 50,
+                      placeholder: (_, __) => const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      errorWidget: (_, __, ___) => const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 28,
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -142,7 +164,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   AppConfig.isMockMode ? '🧪 Modo de teste' : 'Bem-vindo de volta',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                   ),
                 ),
