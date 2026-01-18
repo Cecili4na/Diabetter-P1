@@ -50,7 +50,22 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } on AuthException catch (e) {
-      _showError(_translateAuthError(e.message));
+      final errorMessage = _translateAuthError(e.message);
+      _showError(errorMessage);
+
+      // If invalid credentials, suggest registration
+      if (e.message.contains('Invalid login credentials')) {
+        _showSuggestionDialog(
+          message: 'Não encontramos uma conta com este email. Deseja criar uma conta?',
+          onConfirm: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => RegisterScreen(initialEmail: _emailController.text.trim()),
+              ),
+            );
+          },
+        );
+      }
     } catch (e) {
       _showError('Erro ao fazer login: $e');
     } finally {
@@ -73,6 +88,42 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.red),
     );
+  }
+
+  Future<void> _showSuggestionDialog({
+    required String message,
+    required VoidCallback onConfirm,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: _mediumBlue),
+            const SizedBox(width: 8),
+            const Text('Atenção'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('NÃO', style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _mediumBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('SIM'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onConfirm();
   }
 
   Future<void> _showForgotPasswordDialog() async {
@@ -329,7 +380,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextButton(
                         onPressed: () {
                           Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => RegisterScreen(
+                                initialEmail: _emailController.text.trim().isNotEmpty
+                                    ? _emailController.text.trim()
+                                    : null,
+                              ),
+                            ),
                           );
                         },
                         child: const Text(
