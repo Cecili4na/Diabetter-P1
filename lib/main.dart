@@ -4,7 +4,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:forui/forui.dart';
 import 'screens/login_screen.dart';
 import 'screens/app_shell.dart';
+import 'screens/onboarding_screen.dart';
 import 'config/app_config.dart';
+import 'models/models.dart';
 
 void main() async {
   try {
@@ -70,12 +72,50 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         final session = snapshot.data?.session;
 
-        if (session != null) {
-          return const AppShell();
+        if (session == null) {
+          return const LoginScreen();
         }
 
-        return const LoginScreen();
+        // User is logged in - check if onboarding is complete
+        return FutureBuilder<UserProfile?>(
+          future: AppConfig.instance.authRepository.getCurrentProfile(),
+          builder: (context, profileSnapshot) {
+            if (profileSnapshot.connectionState == ConnectionState.waiting) {
+              return const _LoadingScreen();
+            }
+
+            final profile = profileSnapshot.data;
+
+            // If no profile or onboarding not complete, show onboarding
+            if (profile == null || !profile.onboardingCompleto) {
+              return const OnboardingScreen();
+            }
+
+            // Onboarding complete, show main app
+            return const AppShell();
+          },
+        );
       },
+    );
+  }
+}
+
+class _LoadingScreen extends StatelessWidget {
+  const _LoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Carregando...'),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -19,6 +19,18 @@ class ProfileScreenState extends State<ProfileScreen> {
   UserProfile? _profile;
   Map<String, int>? _quota;
 
+  // Horários disponíveis para medição
+  static const List<String> _horariosDisponiveis = [
+    'Jejum',
+    'Pré-café',
+    'Pós-café',
+    'Pré-almoço',
+    'Pós-almoço',
+    'Pré-jantar',
+    'Pós-jantar',
+    'Antes de dormir',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -177,6 +189,17 @@ class ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildHeader() {
+    // Calculate age from birth date
+    int? idade;
+    if (_profile?.dataNascimento != null) {
+      final now = DateTime.now();
+      idade = now.year - _profile!.dataNascimento!.year;
+      if (now.month < _profile!.dataNascimento!.month ||
+          (now.month == _profile!.dataNascimento!.month && now.day < _profile!.dataNascimento!.day)) {
+        idade--;
+      }
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -190,7 +213,7 @@ class ProfileScreenState extends State<ProfileScreen> {
             height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               border: Border.all(color: Colors.white, width: 3),
             ),
             child: const Icon(
@@ -212,8 +235,58 @@ class ProfileScreenState extends State<ProfileScreen> {
           Text(
             _profile?.email ?? '',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 14,
+            ),
+          ),
+          // Complementary data chips
+          if (_hasComplementaryData()) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                if (_profile?.tipoDiabetes != null)
+                  _buildHeaderChip(_profile!.tipoDiabetes!),
+                if (idade != null)
+                  _buildHeaderChip('$idade anos'),
+                if (_profile?.altura != null)
+                  _buildHeaderChip('${_profile!.altura!.round()} cm'),
+                if (_profile?.peso != null)
+                  _buildHeaderChip('${_profile!.peso!.toStringAsFixed(1)} kg'),
+              ],
+            ),
+          ],
+          // Edit complementary data button
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _showEditComplementaryDataDialog,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.edit,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Editar dados pessoais',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           if (AppConfig.isMockMode) ...[
@@ -221,11 +294,11 @@ class ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                '🧪 Modo de Teste',
+                'Modo de Teste',
                 style: TextStyle(color: Colors.white, fontSize: 12),
               ),
             ),
@@ -235,7 +308,35 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  bool _hasComplementaryData() {
+    return _profile?.tipoDiabetes != null ||
+        _profile?.dataNascimento != null ||
+        _profile?.altura != null ||
+        _profile?.peso != null;
+  }
+
+  Widget _buildHeaderChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(color: Colors.white, fontSize: 12),
+      ),
+    );
+  }
+
   Widget _buildProfileCard() {
+    final tipoTratamentoDisplay = {
+      'insulina': 'Insulina',
+      'comprimidos': 'Comprimidos',
+      'ambos': 'Insulina e Comprimidos',
+      'nenhum': 'Apenas dieta',
+    };
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: AppDecorations.card,
@@ -247,18 +348,318 @@ class ProfileScreenState extends State<ProfileScreen> {
               const Icon(Icons.medical_information, color: AppColors.primaryBlue),
               const SizedBox(width: 12),
               Text('Informações Médicas', style: AppTextStyles.heading3),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.edit, color: AppColors.primaryBlue, size: 20),
+                onPressed: _showEditMedicalInfoDialog,
+                tooltip: 'Editar',
+              ),
             ],
           ),
           const Divider(height: 24),
-          _buildInfoRow('Tipo de Diabetes', _profile?.tipoDiabetes ?? 'Não informado'),
-          _buildInfoRow('Unidade', _profile?.unidadeGlicemia ?? 'mg/dL'),
+          _buildInfoRow('Unidade de Glicose', _profile?.unidadeGlicemia ?? 'mg/dL'),
+          _buildInfoRow('Unidade de A1c', _profile?.unidadeA1c ?? '%'),
           _buildInfoRow(
             'Meta de Glicemia',
-            '${_profile?.metas['min'] ?? 70} - ${_profile?.metas['max'] ?? 180} mg/dL',
+            '${_profile?.metas['min'] ?? 70} - ${_profile?.metas['max'] ?? 180} ${_profile?.unidadeGlicemia ?? 'mg/dL'}',
+          ),
+          _buildInfoRow(
+            'Tratamento',
+            tipoTratamentoDisplay[_profile?.tipoTratamento] ?? 'Não informado',
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _showEditMedicalInfoDialog() async {
+    if (_profile == null) return;
+
+    String unidadeGlicemia = _profile!.unidadeGlicemia;
+    String unidadeA1c = _profile!.unidadeA1c;
+    String? tipoTratamento = _profile!.tipoTratamento;
+    double metaMin = (_profile!.metas['min'] as num).toDouble();
+    double metaMax = (_profile!.metas['max'] as num).toDouble();
+    double metaAlvo = (_profile!.metas['alvo'] as num).toDouble();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Editar Informações Médicas'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Unidade de Glicose', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'mg/dL', label: Text('mg/dL')),
+                    ButtonSegment(value: 'mmol/L', label: Text('mmol/L')),
+                  ],
+                  selected: {unidadeGlicemia},
+                  onSelectionChanged: (value) => setDialogState(() => unidadeGlicemia = value.first),
+                ),
+                const SizedBox(height: 16),
+                const Text('Unidade de A1c', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: '%', label: Text('%')),
+                    ButtonSegment(value: 'mmol/mol', label: Text('mmol/mol')),
+                  ],
+                  selected: {unidadeA1c},
+                  onSelectionChanged: (value) => setDialogState(() => unidadeA1c = value.first),
+                ),
+                const SizedBox(height: 16),
+                const Text('Tratamento', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: tipoTratamento,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'insulina', child: Text('Insulina')),
+                    DropdownMenuItem(value: 'comprimidos', child: Text('Comprimidos')),
+                    DropdownMenuItem(value: 'ambos', child: Text('Ambos')),
+                    DropdownMenuItem(value: 'nenhum', child: Text('Apenas dieta')),
+                  ],
+                  onChanged: (value) => setDialogState(() => tipoTratamento = value),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCELAR'),
+            ),
+            ElevatedButton(
+              style: AppButtonStyles.primary,
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('SALVAR'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true) {
+      final updatedProfile = _profile!.copyWith(
+        unidadeGlicemia: unidadeGlicemia,
+        unidadeA1c: unidadeA1c,
+        tipoTratamento: tipoTratamento,
+        metas: {'min': metaMin.round(), 'max': metaMax.round(), 'alvo': metaAlvo.round()},
+      );
+
+      try {
+        await AppConfig.instance.authRepository.updateProfile(updatedProfile);
+        await _loadProfile();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Informações atualizadas!'), backgroundColor: AppColors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _showEditComplementaryDataDialog() async {
+    if (_profile == null) return;
+
+    String? tipoDiabetes = _profile!.tipoDiabetes;
+    DateTime? dataNascimento = _profile!.dataNascimento;
+    String? sexo = _profile!.sexo;
+    final alturaController = TextEditingController(
+      text: _profile!.altura?.round().toString() ?? '',
+    );
+    final pesoController = TextEditingController(
+      text: _profile!.peso?.toStringAsFixed(1) ?? '',
+    );
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Dados Complementares'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Tipo de Diabetes', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: tipoDiabetes,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Tipo 1', child: Text('Tipo 1')),
+                    DropdownMenuItem(value: 'Tipo 2', child: Text('Tipo 2')),
+                    DropdownMenuItem(value: 'Gestacional', child: Text('Gestacional')),
+                    DropdownMenuItem(value: 'LADA', child: Text('LADA')),
+                    DropdownMenuItem(value: 'Outro', child: Text('Outro')),
+                  ],
+                  onChanged: (value) => setDialogState(() => tipoDiabetes = value),
+                ),
+                const SizedBox(height: 16),
+                const Text('Data de Nascimento', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: dataNascimento ?? DateTime(1990),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => dataNascimento = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            dataNascimento != null
+                                ? '${dataNascimento!.day.toString().padLeft(2, '0')}/${dataNascimento!.month.toString().padLeft(2, '0')}/${dataNascimento!.year}'
+                                : 'Selecionar data',
+                            style: TextStyle(
+                              color: dataNascimento != null ? Colors.black : Colors.grey,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.calendar_today, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Sexo', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: sexo,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'masculino', child: Text('Masculino')),
+                    DropdownMenuItem(value: 'feminino', child: Text('Feminino')),
+                    DropdownMenuItem(value: 'outro', child: Text('Outro')),
+                    DropdownMenuItem(value: 'prefiro_nao_informar', child: Text('Prefiro não informar')),
+                  ],
+                  onChanged: (value) => setDialogState(() => sexo = value),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Altura (cm)', style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: alturaController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: '170',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Peso (kg)', style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: pesoController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: '70.0',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCELAR'),
+            ),
+            ElevatedButton(
+              style: AppButtonStyles.primary,
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('SALVAR'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true) {
+      final altura = double.tryParse(alturaController.text);
+      final peso = double.tryParse(pesoController.text.replaceAll(',', '.'));
+
+      final updatedProfile = _profile!.copyWith(
+        tipoDiabetes: tipoDiabetes,
+        dataNascimento: dataNascimento,
+        sexo: sexo,
+        altura: altura,
+        peso: peso,
+      );
+
+      try {
+        await AppConfig.instance.authRepository.updateProfile(updatedProfile);
+        await _loadProfile();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Dados atualizados!'), backgroundColor: AppColors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+
+    alturaController.dispose();
+    pesoController.dispose();
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -352,26 +753,122 @@ class ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSettingsCard() {
+    // Build measurement times subtitle
+    final horarios = _profile?.horariosMedicao ?? [];
+    String horariosSubtitle = 'Nenhum configurado';
+    if (horarios.isNotEmpty) {
+      if (horarios.length <= 2) {
+        horariosSubtitle = horarios.join(', ');
+      } else {
+        horariosSubtitle = '${horarios.length} horários configurados';
+      }
+    }
+
     return Container(
       decoration: AppDecorations.card,
       child: Column(
         children: [
-          _buildSettingsItem(Icons.notifications_outlined, 'Notificações', () {}),
+          _buildSettingsItem(Icons.notifications_outlined, 'Notificações', null, () {}),
           const Divider(height: 1),
-          _buildSettingsItem(Icons.schedule, 'Horários de Medição', () {}),
+          _buildSettingsItem(Icons.schedule, 'Horários de Medição', horariosSubtitle, _showMeasurementTimesDialog),
           const Divider(height: 1),
-          _buildSettingsItem(Icons.download, 'Exportar Dados', _exportData),
+          _buildSettingsItem(Icons.download, 'Exportar Dados', null, _exportData),
           const Divider(height: 1),
-          _buildSettingsItem(Icons.help_outline, 'Ajuda', () {}),
+          _buildSettingsItem(Icons.help_outline, 'Ajuda', null, () {}),
         ],
       ),
     );
   }
 
-  Widget _buildSettingsItem(IconData icon, String label, VoidCallback onTap) {
+  Future<void> _showMeasurementTimesDialog() async {
+    if (_profile == null) return;
+
+    List<String> selected = List.from(_profile!.horariosMedicao);
+
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Horários de Medição'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Selecione os horários em que você costuma medir a glicose:',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _horariosDisponiveis.map((horario) {
+                    final isSelected = selected.contains(horario);
+                    return FilterChip(
+                      label: Text(horario),
+                      selected: isSelected,
+                      onSelected: (value) {
+                        setDialogState(() {
+                          if (value) {
+                            selected.add(horario);
+                          } else {
+                            selected.remove(horario);
+                          }
+                        });
+                      },
+                      selectedColor: AppColors.primaryBlue.withValues(alpha: 0.2),
+                      checkmarkColor: AppColors.primaryBlue,
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CANCELAR'),
+            ),
+            ElevatedButton(
+              style: AppButtonStyles.primary,
+              onPressed: () => Navigator.pop(context, selected),
+              child: const Text('SALVAR'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null) {
+      final updatedProfile = _profile!.copyWith(
+        horariosMedicao: result,
+      );
+
+      try {
+        await AppConfig.instance.authRepository.updateProfile(updatedProfile);
+        await _loadProfile();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Horários atualizados!'), backgroundColor: AppColors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildSettingsItem(IconData icon, String label, String? subtitle, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: AppColors.darkGrey),
       title: Text(label, style: AppTextStyles.body),
+      subtitle: subtitle != null ? Text(subtitle, style: AppTextStyles.bodySmall) : null,
       trailing: const Icon(Icons.chevron_right, color: AppColors.grey),
       onTap: onTap,
     );

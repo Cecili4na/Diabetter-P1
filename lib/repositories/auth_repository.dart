@@ -59,6 +59,13 @@ class AuthRepository implements IAuthRepository {
       'horarios_medicao': profile.horariosMedicao,
       'metas': profile.metas,
       'unidade_glicemia': profile.unidadeGlicemia,
+      'unidade_a1c': profile.unidadeA1c,
+      'tipo_tratamento': profile.tipoTratamento,
+      'onboarding_completo': profile.onboardingCompleto,
+      'data_nascimento': profile.dataNascimento?.toIso8601String().split('T').first,
+      'altura': profile.altura,
+      'peso': profile.peso,
+      'sexo': profile.sexo,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', profile.id);
   }
