@@ -2,6 +2,8 @@
 // User profile and settings screen (RF-03)
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../config/app_theme.dart';
 import '../config/app_config.dart';
 import '../models/models.dart';
@@ -18,6 +20,8 @@ class ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   UserProfile? _profile;
   Map<String, int>? _quota;
+
+  final _imagePicker = ImagePicker();
 
   // Horários disponíveis para medição
   static const List<String> _horariosDisponiveis = [
@@ -208,20 +212,7 @@ class ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.2),
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            child: const Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 40,
-            ),
-          ),
+          _buildAvatar(),
           const SizedBox(height: 12),
           Text(
             _profile?.nome ?? 'Usuário',
@@ -327,6 +318,149 @@ class ProfileScreenState extends State<ProfileScreen> {
         style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
     );
+  }
+
+  Widget _buildAvatar() {
+    return GestureDetector(
+      onTap: _showPhotoOptions,
+      child: Stack(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.2),
+              border: Border.all(color: Colors.white, width: 3),
+            ),
+            child: ClipOval(
+              child: _profile?.avatarUrl != null
+                  ? CachedNetworkImage(
+                      imageUrl: _profile!.avatarUrl!,
+                      fit: BoxFit.cover,
+                      width: 80,
+                      height: 80,
+                      placeholder: (_, __) => const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      errorWidget: (_, __, ___) => const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    )
+                  : const Icon(Icons.person, color: Colors.white, size: 40),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.camera_alt,
+                size: 16,
+                color: AppColors.primaryBlue,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showPhotoOptions() async {
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Alterar foto'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Câmera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galeria'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+    );
+
+    if (picked != null && _profile != null) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Atualizando foto...'),
+            ],
+          ),
+        ),
+      );
+
+      try {
+        final bytes = await picked.readAsBytes();
+        final avatarUrl = await AppConfig.instance.authRepository.uploadProfilePhoto(
+          _profile!.id,
+          bytes,
+        );
+
+        final updatedProfile = _profile!.copyWith(avatarUrl: avatarUrl);
+        await AppConfig.instance.authRepository.updateProfile(updatedProfile);
+
+        // Close loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        await _loadProfile();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Foto atualizada!'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        // Close loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao atualizar foto: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildProfileCard() {

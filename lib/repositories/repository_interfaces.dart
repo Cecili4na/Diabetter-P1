@@ -1,6 +1,7 @@
 // lib/repositories/repository_interfaces.dart
 // Abstract interfaces for all repositories - enables mocking for tests
 
+import 'dart:typed_data';
 import '../models/models.dart';
 import '../models/event_record.dart';
 import '../models/plano.dart';
@@ -26,6 +27,9 @@ abstract class IAuthRepository {
 
   /// Update user profile (RF-03)
   Future<void> updateProfile(UserProfile profile);
+
+  /// Upload profile photo to storage
+  Future<String?> uploadProfilePhoto(String userId, Uint8List imageBytes);
 }
 
 /// Abstract interface for health data operations (RF-04, RF-05, RF-06)

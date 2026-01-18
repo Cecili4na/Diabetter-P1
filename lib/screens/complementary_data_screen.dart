@@ -1,7 +1,9 @@
 // lib/screens/complementary_data_screen.dart
 // Optional complementary data collection after essential onboarding
 
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../config/app_config.dart';
 
 class ComplementaryDataScreen extends StatefulWidget {
@@ -20,6 +22,10 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
   final _pesoController = TextEditingController();
   List<String> _horariosMedicao = [];
   bool _isLoading = false;
+
+  // Avatar
+  Uint8List? _selectedImageBytes;
+  final _imagePicker = ImagePicker();
 
   // Blue color scheme (matching onboarding)
   static const Color _darkBlue = Color(0xFF1E3A5F);
@@ -51,11 +57,59 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
+  Future<void> _pickImage() async {
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Escolher foto'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Câmera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galeria'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+    );
+
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() => _selectedImageBytes = bytes);
+    }
+  }
+
   Future<void> _save() async {
     setState(() => _isLoading = true);
     try {
       final profile = await AppConfig.instance.authRepository.getCurrentProfile();
       if (profile == null) throw Exception('Perfil não encontrado');
+
+      // Upload avatar if selected
+      String? avatarUrl;
+      if (_selectedImageBytes != null) {
+        avatarUrl = await AppConfig.instance.authRepository.uploadProfilePhoto(
+          profile.id,
+          _selectedImageBytes!,
+        );
+      }
 
       final updatedProfile = profile.copyWith(
         tipoDiabetes: _tipoDiabetes,
@@ -64,6 +118,7 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
         altura: double.tryParse(_alturaController.text),
         peso: double.tryParse(_pesoController.text.replaceAll(',', '.')),
         horariosMedicao: _horariosMedicao,
+        avatarUrl: avatarUrl,
       );
 
       await AppConfig.instance.authRepository.updateProfile(updatedProfile);
@@ -101,16 +156,12 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
+              // Header with Avatar Picker
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.person_add,
-                      size: 48,
-                      color: Colors.white,
-                    ),
+                    _buildAvatarPicker(),
                     const SizedBox(height: 16),
                     const Text(
                       'Dados Complementares',
@@ -441,6 +492,46 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
             Icon(Icons.calendar_today, color: _mediumBlue, size: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarPicker() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.2),
+              border: Border.all(color: Colors.white, width: 3),
+              image: _selectedImageBytes != null
+                  ? DecorationImage(
+                      image: MemoryImage(_selectedImageBytes!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: _selectedImageBytes == null
+                ? const Icon(Icons.person, color: Colors.white, size: 50)
+                : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.camera_alt, size: 20, color: _mediumBlue),
+            ),
+          ),
+        ],
       ),
     );
   }

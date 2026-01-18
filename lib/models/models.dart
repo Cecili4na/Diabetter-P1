@@ -19,6 +19,7 @@ class UserProfile {
   final double? altura;                 // cm
   final double? peso;                   // kg
   final String? sexo;                   // 'masculino', 'feminino', 'outro', 'prefiro_nao_informar'
+  final String? avatarUrl;              // URL da foto de perfil no Supabase Storage
 
   UserProfile({
     required this.id,
@@ -36,6 +37,7 @@ class UserProfile {
     this.altura,
     this.peso,
     this.sexo,
+    this.avatarUrl,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@ class UserProfile {
       altura: json['altura'] != null ? (json['altura'] as num).toDouble() : null,
       peso: json['peso'] != null ? (json['peso'] as num).toDouble() : null,
       sexo: json['sexo'],
+      avatarUrl: json['avatar_url'],
     );
   }
 
@@ -80,6 +83,7 @@ class UserProfile {
       'altura': altura,
       'peso': peso,
       'sexo': sexo,
+      'avatar_url': avatarUrl,
     };
   }
 
@@ -98,6 +102,7 @@ class UserProfile {
     double? altura,
     double? peso,
     String? sexo,
+    String? avatarUrl,
   }) {
     return UserProfile(
       id: id,
@@ -115,6 +120,7 @@ class UserProfile {
       altura: altura ?? this.altura,
       peso: peso ?? this.peso,
       sexo: sexo ?? this.sexo,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }

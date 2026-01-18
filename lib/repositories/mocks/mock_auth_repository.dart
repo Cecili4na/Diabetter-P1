@@ -2,6 +2,7 @@
 // Mock implementation for testing without Supabase
 
 import 'dart:async';
+import 'dart:typed_data';
 import '../repository_interfaces.dart';
 import '../../models/models.dart';
 
@@ -107,9 +108,18 @@ class MockAuthRepository implements IAuthRepository {
   @override
   Future<void> updateProfile(UserProfile profile) async {
     await Future.delayed(const Duration(milliseconds: 200));
-    
+
     if (!_isLoggedIn) throw Exception('Usuário não autenticado');
     _currentUser = profile;
+  }
+
+  @override
+  Future<String?> uploadProfilePhoto(String userId, Uint8List imageBytes) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (!_isLoggedIn) throw Exception('Usuário não autenticado');
+    // Return a mock URL with timestamp for cache busting
+    return 'https://mock-storage.example.com/avatars/$userId.jpg?t=${DateTime.now().millisecondsSinceEpoch}';
   }
 
   // Helper methods for tests

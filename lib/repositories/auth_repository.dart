@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../models/models.dart';
@@ -66,7 +67,21 @@ class AuthRepository implements IAuthRepository {
       'altura': profile.altura,
       'peso': profile.peso,
       'sexo': profile.sexo,
+      'avatar_url': profile.avatarUrl,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', profile.id);
+  }
+
+  // Upload profile photo to Supabase Storage
+  Future<String?> uploadProfilePhoto(String userId, Uint8List imageBytes) async {
+    final path = '$userId.jpg';
+    await _client.storage.from('avatars').uploadBinary(
+      path,
+      imageBytes,
+      fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+    );
+    final url = _client.storage.from('avatars').getPublicUrl(path);
+    // Add timestamp to invalidate cache
+    return '$url?t=${DateTime.now().millisecondsSinceEpoch}';
   }
 }
