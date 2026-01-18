@@ -9,7 +9,9 @@ import '../services/charts_service.dart';
 import '../services/predictions_service.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final void Function(int tabIndex)? onNavigateToRecord;
+
+  const DashboardScreen({super.key, this.onNavigateToRecord});
 
   @override
   DashboardScreenState createState() => DashboardScreenState();
@@ -415,13 +417,6 @@ class DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _navigateToRecord(int tabIndex) {
-    // Find parent AppShell and switch to Record tab
-    // For now, show a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Vá para a aba "Registrar" para adicionar'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    widget.onNavigateToRecord?.call(tabIndex);
   }
 }

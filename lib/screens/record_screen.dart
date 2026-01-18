@@ -12,16 +12,23 @@ class RecordScreen extends StatefulWidget {
   const RecordScreen({super.key});
 
   @override
-  State<RecordScreen> createState() => _RecordScreenState();
+  RecordScreenState createState() => RecordScreenState();
 }
 
-class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderStateMixin {
+class RecordScreenState extends State<RecordScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+  }
+
+  /// Select a specific tab (0: Glicemia, 1: Insulina, 2: Evento)
+  void selectTab(int index) {
+    if (index >= 0 && index < 3) {
+      _tabController.animateTo(index);
+    }
   }
 
   @override

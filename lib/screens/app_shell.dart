@@ -20,6 +20,7 @@ class _AppShellState extends State<AppShell> {
 
   // GlobalKeys to access screen states for refresh
   final _dashboardKey = GlobalKey<DashboardScreenState>();
+  final _recordKey = GlobalKey<RecordScreenState>();
   final _chartsKey = GlobalKey<ChartsScreenState>();
   final _profileKey = GlobalKey<ProfileScreenState>();
 
@@ -29,11 +30,22 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _screens = [
-      DashboardScreen(key: _dashboardKey),
-      const RecordScreen(),
+      DashboardScreen(
+        key: _dashboardKey,
+        onNavigateToRecord: _navigateToRecord,
+      ),
+      RecordScreen(key: _recordKey),
       ChartsScreen(key: _chartsKey),
       ProfileScreen(key: _profileKey),
     ];
+  }
+
+  /// Navigate to record screen with a specific tab selected
+  void _navigateToRecord(int tabIndex) {
+    setState(() => _currentIndex = 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _recordKey.currentState?.selectTab(tabIndex);
+    });
   }
 
   void _onTabChanged(int newIndex) {
