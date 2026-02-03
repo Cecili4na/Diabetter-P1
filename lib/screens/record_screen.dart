@@ -2,6 +2,7 @@
 // Screen for recording glucose, insulin, and events (RF-04, RF-05, RF-06)
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_theme.dart';
 import '../config/app_config.dart';
 import '../models/models.dart';
@@ -95,6 +96,11 @@ class _GlucoseFormState extends State<_GlucoseForm> {
   final _notesController = TextEditingController();
   bool _isLoading = false;
 
+  String? _getUserId() {
+    if (AppConfig.isMockMode) return 'mock-user';
+    return Supabase.instance.client.auth.currentUser?.id;
+  }
+
   Future<void> _submit() async {
     final value = double.tryParse(_valueController.text);
     if (value == null || value < 40 || value > 600) {
@@ -121,8 +127,21 @@ class _GlucoseFormState extends State<_GlucoseForm> {
         return;
       }
 
+      final userId = _getUserId();
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sessão expirada. Faça login novamente.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
       final record = GlucoseRecord(
-        userId: 'mock-user',
+        userId: userId,
         quantity: value,
         timestamp: DateTime.now(),
         notas: _notesController.text.isEmpty ? null : _notesController.text,
@@ -246,6 +265,11 @@ class _InsulinFormState extends State<_InsulinForm> {
   final List<String> _types = ['Bolus', 'Basal', 'Correção'];
   final List<String> _bodyParts = ['Abdômen', 'Braço esquerdo', 'Braço direito', 'Coxa esquerda', 'Coxa direita'];
 
+  String? _getUserId() {
+    if (AppConfig.isMockMode) return 'mock-user';
+    return Supabase.instance.client.auth.currentUser?.id;
+  }
+
   Future<void> _submit() async {
     final units = double.tryParse(_unitsController.text);
     if (units == null || units < 0.5 || units > 100) {
@@ -272,8 +296,21 @@ class _InsulinFormState extends State<_InsulinForm> {
         return;
       }
 
+      final userId = _getUserId();
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sessão expirada. Faça login novamente.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
       final record = InsulinRecord(
-        userId: 'mock-user',
+        userId: userId,
         quantity: units,
         timestamp: DateTime.now(),
         type: _selectedType,
@@ -404,6 +441,11 @@ class _EventFormState extends State<_EventForm> {
   EventType _selectedType = EventType.refeicao;
   bool _isLoading = false;
 
+  String? _getUserId() {
+    if (AppConfig.isMockMode) return 'mock-user';
+    return Supabase.instance.client.auth.currentUser?.id;
+  }
+
   Future<void> _submit() async {
     if (_titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -429,8 +471,21 @@ class _EventFormState extends State<_EventForm> {
         return;
       }
 
+      final userId = _getUserId();
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sessão expirada. Faça login novamente.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
       final record = EventRecord(
-        userId: 'mock-user',
+        userId: userId,
         titulo: _titleController.text,
         descricao: _descController.text.isEmpty ? null : _descController.text,
         tipoEvento: _selectedType,

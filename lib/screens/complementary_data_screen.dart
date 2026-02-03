@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../config/app_config.dart';
+import 'safety_disclaimer_screen.dart';
 
 class ComplementaryDataScreen extends StatefulWidget {
   const ComplementaryDataScreen({super.key});
@@ -54,7 +55,9 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
   }
 
   Future<void> _skip() async {
-    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const SafetyDisclaimerScreen()),
+    );
   }
 
   Future<void> _pickImage() async {
@@ -124,7 +127,9 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
       await AppConfig.instance.authRepository.updateProfile(updatedProfile);
 
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const SafetyDisclaimerScreen()),
+        );
       }
     } catch (e) {
       if (mounted) {

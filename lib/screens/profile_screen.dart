@@ -8,6 +8,7 @@ import '../config/app_theme.dart';
 import '../config/app_config.dart';
 import '../models/models.dart';
 import '../services/export_service.dart';
+import '../widgets/in_construction_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -902,13 +903,17 @@ class ProfileScreenState extends State<ProfileScreen> {
       decoration: AppDecorations.card,
       child: Column(
         children: [
-          _buildSettingsItem(Icons.notifications_outlined, 'Notificações', null, () {}),
+          _buildSettingsItem(Icons.notifications_outlined, 'Notificações', null, () {
+            showInConstructionDialog(context, featureName: 'Notificações');
+          }),
           const Divider(height: 1),
           _buildSettingsItem(Icons.schedule, 'Horários de Medição', horariosSubtitle, _showMeasurementTimesDialog),
           const Divider(height: 1),
           _buildSettingsItem(Icons.download, 'Exportar Dados', null, _exportData),
           const Divider(height: 1),
-          _buildSettingsItem(Icons.help_outline, 'Ajuda', null, () {}),
+          _buildSettingsItem(Icons.help_outline, 'Ajuda', null, () {
+            showInConstructionDialog(context, featureName: 'Ajuda');
+          }),
         ],
       ),
     );
