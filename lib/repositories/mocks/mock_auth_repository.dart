@@ -122,6 +122,13 @@ class MockAuthRepository implements IAuthRepository {
     return 'https://mock-storage.example.com/avatars/$userId.jpg?t=${DateTime.now().millisecondsSinceEpoch}';
   }
 
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    // In mock mode, just simulate success
+    // Password is not stored in mock implementation
+  }
+
   // Helper methods for tests
   bool get isLoggedIn => _isLoggedIn;
   

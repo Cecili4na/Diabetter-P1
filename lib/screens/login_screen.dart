@@ -172,7 +172,25 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _sendPasswordResetEmail(String email) async {
     try {
       if (!AppConfig.isMockMode) {
-        await Supabase.instance.client.auth.resetPasswordForEmail(email);
+        // Get the current URL origin for redirect
+        // For web, use the current origin; for mobile, use a deep link
+        String redirectTo;
+        
+        // Try to detect if running on web
+        try {
+          // This will work on web
+          final uri = Uri.base;
+          redirectTo = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}/reset-password';
+        } catch (e) {
+          // Fallback for mobile or if detection fails
+          // Use a deep link format (you can customize this)
+          redirectTo = 'diabetter://reset-password';
+        }
+        
+        await Supabase.instance.client.auth.resetPasswordForEmail(
+          email,
+          redirectTo: redirectTo,
+        );
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

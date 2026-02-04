@@ -84,4 +84,11 @@ class AuthRepository implements IAuthRepository {
     // Add timestamp to invalidate cache
     return '$url?t=${DateTime.now().millisecondsSinceEpoch}';
   }
+
+  // Update password (for password reset)
+  Future<void> updatePassword(String newPassword) async {
+    await _client.auth.updateUser(
+      UserAttributes(password: newPassword),
+    );
+  }
 }

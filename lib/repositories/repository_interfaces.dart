@@ -30,6 +30,9 @@ abstract class IAuthRepository {
 
   /// Upload profile photo to storage
   Future<String?> uploadProfilePhoto(String userId, Uint8List imageBytes);
+
+  /// Update user password (for password reset)
+  Future<void> updatePassword(String newPassword);
 }
 
 /// Abstract interface for health data operations (RF-04, RF-05, RF-06)
