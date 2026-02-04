@@ -133,19 +133,54 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Recuperar Senha'),
+        title: Row(
+          children: [
+            Icon(Icons.lock_reset, color: _mediumBlue),
+            const SizedBox(width: 8),
+            const Text('Recuperar Senha'),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Digite seu email para receber um link de recuperação de senha.'),
+            const Text(
+              'Digite seu email cadastrado para receber um link de recuperação de senha.',
+              style: TextStyle(fontSize: 14),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: resetEmailController,
               keyboardType: TextInputType.emailAddress,
+              autofocus: true,
               decoration: InputDecoration(
                 labelText: 'Email',
+                hintText: 'seu@email.com',
                 prefixIcon: const Icon(Icons.email_outlined),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 20, color: _mediumBlue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Verificaremos se este email está cadastrado antes de enviar.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _darkBlue,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -167,23 +202,199 @@ class _LoginScreenState extends State<LoginScreen> {
     if (confirmed == true && resetEmailController.text.isNotEmpty) {
       await _sendPasswordResetEmail(resetEmailController.text.trim());
     }
+    
+    resetEmailController.dispose();
   }
 
   Future<void> _sendPasswordResetEmail(String email) async {
+    // Validate email format
+    if (email.isEmpty) {
+      _showError('Digite um email válido');
+      return;
+    }
+
+    final emailRegex = RegExp(r'^.+@.+\..+$');
+    if (!emailRegex.hasMatch(email)) {
+      _showError('Digite um email válido');
+      return;
+    }
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('Verificando...'),
+          ],
+        ),
+      ),
+    );
+
     try {
       if (!AppConfig.isMockMode) {
-        await Supabase.instance.client.auth.resetPasswordForEmail(email);
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Email de recuperação enviado para $email'),
-            backgroundColor: AppColors.green,
-          ),
-        );
+        // Check if user exists using the secure RPC function
+        bool userExists = false;
+        
+        try {
+          // Call the check_email_exists() function
+          final response = await Supabase.instance.client
+              .rpc('check_email_exists', params: {'email_to_check': email});
+          
+          userExists = response == true;
+          print('Email verification result: $userExists');
+        } catch (e) {
+          print('Error checking email: $e');
+          // If RPC fails, show error and don't proceed
+          if (mounted) Navigator.of(context).pop();
+          _showError('Erro ao verificar email. Tente novamente.');
+          return;
+        }
+
+        // Close loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        if (!userExists) {
+          // User not found - show suggestion
+          if (mounted) {
+            _showSuggestionDialog(
+              message: 'Não encontramos uma conta com este email. Deseja criar uma conta?',
+              onConfirm: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => RegisterScreen(initialEmail: email),
+                  ),
+                );
+              },
+            );
+          }
+          return;
+        }
+
+        // User exists, send reset email
+        try {
+          await Supabase.instance.client.auth.resetPasswordForEmail(
+            email,
+            redirectTo: 'http://localhost:3000/reset-password',
+          );
+        } on AuthException catch (e) {
+          if (mounted) Navigator.of(context).pop();
+          
+          // Handle rate limit error
+          if (e.statusCode == '429') {
+            _showError('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+            return;
+          }
+          
+          // Handle other auth errors
+          _showError('Erro ao enviar email: ${e.message}');
+          return;
+        }
+
+        if (mounted) {
+          // Show success dialog with instructions
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.mark_email_read,
+                      size: 48,
+                      color: AppColors.green,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Email Enviado!',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Enviamos um link de recuperação para:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    email,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryBlue,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Clique no link do email para redefinir sua senha.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Não esqueça de verificar a pasta de spam!',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: AppButtonStyles.primary,
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('ENTENDI'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        // Mock mode
+        if (mounted) Navigator.of(context).pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Email de recuperação enviado para $email'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+        }
       }
     } catch (e) {
-      _showError('Erro ao enviar email: $e');
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop();
+        _showError('Erro ao processar solicitação: $e');
+      }
     }
   }
 
