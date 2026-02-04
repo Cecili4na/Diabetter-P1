@@ -434,27 +434,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   'Mínimo (Hipoglicemia)',
                   _metaMin,
                   _sliderMin,
-                  _metaAlvo - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10),
+                  _sliderMax,
                   Colors.red,
-                  (value) => setState(() => _metaMin = value),
+                  (value) {
+                    setState(() {
+                      _metaMin = value;
+                      // Ajusta alvo se necessário
+                      if (_metaAlvo <= _metaMin) {
+                        _metaAlvo = _metaMin + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
+                      }
+                      // Ajusta máximo se necessário
+                      if (_metaMax <= _metaAlvo) {
+                        _metaMax = _metaAlvo + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 24),
                 _buildGoalSlider(
                   'Alvo',
                   _metaAlvo,
-                  _metaMin + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10),
-                  _metaMax - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10),
+                  _sliderMin,
+                  _sliderMax,
                   Colors.green,
-                  (value) => setState(() => _metaAlvo = value),
+                  (value) {
+                    setState(() {
+                      _metaAlvo = value;
+                      // Ajusta mínimo se necessário
+                      if (_metaMin >= _metaAlvo) {
+                        _metaMin = _metaAlvo - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
+                      }
+                      // Ajusta máximo se necessário
+                      if (_metaMax <= _metaAlvo) {
+                        _metaMax = _metaAlvo + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 24),
                 _buildGoalSlider(
                   'Máximo (Hiperglicemia)',
                   _metaMax,
-                  _metaAlvo + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10),
+                  _sliderMin,
                   _sliderMax,
                   Colors.orange,
-                  (value) => setState(() => _metaMax = value),
+                  (value) {
+                    setState(() {
+                      _metaMax = value;
+                      // Ajusta alvo se necessário
+                      if (_metaAlvo >= _metaMax) {
+                        _metaAlvo = _metaMax - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
+                      }
+                      // Ajusta mínimo se necessário
+                      if (_metaMin >= _metaAlvo) {
+                        _metaMin = _metaAlvo - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
                 Container(
