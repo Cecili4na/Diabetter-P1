@@ -301,6 +301,127 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  void _showTermsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.description_outlined, color: _mediumBlue),
+            const SizedBox(width: 8),
+            const Text('Termos de Uso'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTermsSection('1. Aceitação dos Termos', 
+                  'Ao utilizar o Diabetter, você concorda com estes Termos de Uso.'),
+                _buildTermsSection('2. Descrição do Serviço', 
+                  'O Diabetter é um aplicativo de controle e monitoramento de diabetes que permite registro de medições, acompanhamento de medicamentos e visualização de estatísticas.'),
+                _buildTermsSection('3. Uso Adequado', 
+                  '• O Diabetter é uma ferramenta de AUXÍLIO no controle do diabetes\n'
+                  '• NÃO substitui consultas médicas ou orientação profissional\n'
+                  '• NÃO fornece diagnósticos ou prescrições médicas\n'
+                  '• Sempre consulte seu médico antes de tomar decisões sobre seu tratamento'),
+                _buildTermsSection('4. Responsabilidades', 
+                  'Você concorda em fornecer informações precisas, manter a confidencialidade de sua senha e usar o aplicativo apenas para fins legais.'),
+                _buildTermsSection('5. Limitações', 
+                  'EM CASO DE EMERGÊNCIA, LIGUE 192 (SAMU) OU PROCURE ATENDIMENTO MÉDICO IMEDIATO. O Diabetter não deve ser usado para situações de emergência.'),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('FECHAR'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.privacy_tip_outlined, color: _mediumBlue),
+            const SizedBox(width: 8),
+            const Text('Política de Privacidade'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTermsSection('Dados que Coletamos', 
+                  '• Dados de cadastro (nome, email, data de nascimento)\n'
+                  '• Dados de saúde (glicemia, medicamentos, alimentação)\n'
+                  '• Dados de uso do aplicativo'),
+                _buildTermsSection('Como Usamos', 
+                  'Seus dados são usados para fornecer os serviços do aplicativo, gerar estatísticas personalizadas e melhorar a experiência do usuário.'),
+                _buildTermsSection('Compartilhamento', 
+                  '• Seus dados NUNCA são vendidos a terceiros\n'
+                  '• Você pode exportar seus dados a qualquer momento\n'
+                  '• Você pode solicitar a exclusão de seus dados'),
+                _buildTermsSection('Seus Direitos (LGPD)', 
+                  '• Acessar seus dados\n'
+                  '• Corrigir dados incorretos\n'
+                  '• Solicitar exclusão\n'
+                  '• Exportar seus dados\n'
+                  '• Revogar consentimento'),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('FECHAR'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTermsSection(String title, String content) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: _darkBlue,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            content,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[700],
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   InputDecoration _buildInputDecoration({
     required String labelText,
     required IconData prefixIcon,
@@ -473,36 +594,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Terms checkbox
-                        Theme(
-                          data: Theme.of(context).copyWith(
-                            checkboxTheme: CheckboxThemeData(
-                              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return _mediumBlue;
-                                }
-                                return Colors.transparent;
-                              }),
-                              side: BorderSide(color: _mediumBlue, width: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
+                        // Terms checkbox with clickable links
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Theme(
+                              data: Theme.of(context).copyWith(
+                                checkboxTheme: CheckboxThemeData(
+                                  fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return _mediumBlue;
+                                    }
+                                    return Colors.transparent;
+                                  }),
+                                  side: BorderSide(color: _mediumBlue, width: 2),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                              child: Checkbox(
+                                value: _acceptedTerms,
+                                onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
                               ),
                             ),
-                          ),
-                          child: CheckboxListTile(
-                            value: _acceptedTerms,
-                            onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
-                            title: Text(
-                              'Aceito os Termos de Uso e Política de Privacidade',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: _darkBlue,
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 12, left: 8),
+                                child: Wrap(
+                                  children: [
+                                    Text(
+                                      'Aceito os ',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: _darkBlue,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _showTermsDialog,
+                                      child: Text(
+                                        'Termos de Uso',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: _mediumBlue,
+                                          fontWeight: FontWeight.bold,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      ' e ',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: _darkBlue,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _showPrivacyDialog,
+                                      child: Text(
+                                        'Política de Privacidade',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: _mediumBlue,
+                                          fontWeight: FontWeight.bold,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                          ),
+                          ],
                         ),
                         const SizedBox(height: 16),
 
