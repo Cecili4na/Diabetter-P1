@@ -62,9 +62,10 @@ async function mapWithConcurrency<T, R>(
 
 serve(async (req: Request) => {
     try {
-        // Auth check
-        const authHeader = req.headers.get("Authorization");
-        if (authHeader !== `Bearer ${CRON_SECRET}`) {
+        // Auth check – CRON_SECRET is passed via a custom header to avoid
+        // conflicting with the Supabase gateway's JWT verification on Authorization.
+        const cronSecret = req.headers.get("x-cron-secret");
+        if (cronSecret !== CRON_SECRET) {
             return new Response("Unauthorized", { status: 401 });
         }
 
@@ -80,7 +81,7 @@ serve(async (req: Request) => {
         const { data: users, error: queryErr } = await supabase
             .from("profiles")
             .select("id, email, nome, horarios_notificacao")
-            .contains("horarios_notificacao", [slot]);
+            .contains("horarios_notificacao", `["${slot}"]`);
 
         if (queryErr) throw queryErr;
 

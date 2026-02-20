@@ -23,7 +23,7 @@ Aplicativo multiplataforma para **controle e acompanhamento de diabetes**, desen
 
 ## Visão Geral
 
-O **Diabetter** permite que pessoas com diabetes registrem eventos de saúde (glicemia, insulina, alimentação, etc.), visualizem gráficos e tendências, configurem metas glicêmicas, exportem relatórios em PDF e recebam notificações.
+O **Diabetter** permite que pessoas com diabetes registrem eventos de saúde, visualizem gráficos e tendências, configurem metas glicêmicas, exportem relatórios em PDF e recebam notificações.
 
 O backend é totalmente serverless, utilizando **Supabase** para autenticação, banco de dados (PostgreSQL), Row-Level Security (RLS), Edge Functions e agendamento de cron jobs.
 
@@ -207,20 +207,6 @@ flutter test test/services/charts_service_test.dart
 | `test/services/predictions_service_test.dart` | Serviço de predições |
 | `test/repositories/mock_health_repository_test.dart` | Repositório mock de saúde |
 
----
-
-## Plataformas Suportadas
-
-| Plataforma | Status |
-|---|---|
-| Android | ✅ Suportado |
-| iOS | ✅ Suportado |
-| Web | ✅ Suportado |
-| Linux | ✅ Suportado |
-| macOS | ✅ Suportado |
-| Windows | ✅ Suportado |
-
----
 
 ## Contribuição
 

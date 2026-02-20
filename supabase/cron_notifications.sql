@@ -20,7 +20,8 @@ SELECT cron.schedule(
     url := 'https://[PROJECT_REF].supabase.co/functions/v1/send_email_notifications',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer [CRON_SECRET]'
+      'Authorization', 'Bearer [SUPABASE_ANON_KEY]',
+      'x-cron-secret', '[CRON_SECRET]'
     )
   );
   $$
