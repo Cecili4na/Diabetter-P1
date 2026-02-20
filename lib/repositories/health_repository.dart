@@ -9,9 +9,8 @@ class HealthRepository implements IHealthRepository {
 
   String? get _userId => _client.auth.currentUser?.id;
 
-  // =====================================================
-  // INSULIN (RF-05)
-  // =====================================================
+
+  // INSULIN
 
   Future<void> addInsulinRecord(InsulinRecord record) async {
     if (_userId == null) throw Exception('User not logged in');
@@ -66,9 +65,8 @@ class HealthRepository implements IHealthRepository {
         .eq('user_id', _userId!);
   }
 
-  // =====================================================
-  // GLUCOSE (RF-04)
-  // =====================================================
+
+  // GLUCOSE
 
   Future<void> addGlucoseRecord(GlucoseRecord record) async {
     if (_userId == null) throw Exception('User not logged in');
@@ -123,9 +121,8 @@ class HealthRepository implements IHealthRepository {
         .eq('user_id', _userId!);
   }
 
-  // =====================================================
-  // EVENTS (RF-06)
-  // =====================================================
+
+  // EVENTS
 
   Future<void> addEventRecord(EventRecord record) async {
     if (_userId == null) throw Exception('User not logged in');
@@ -184,9 +181,8 @@ class HealthRepository implements IHealthRepository {
         .eq('user_id', _userId!);
   }
 
-  // =====================================================
-  // STATISTICS (RF-08, RF-12 - Médias)
-  // =====================================================
+
+  // STATISTICS
 
   /// Get glucose average for a period
   Future<double?> getGlucoseAverage({
@@ -200,7 +196,7 @@ class HealthRepository implements IHealthRepository {
     return sum / records.length;
   }
 
-  /// Get daily glucose averages for chart (RF-08)
+  /// Get daily glucose averages for chart
   Future<Map<DateTime, double>> getDailyGlucoseAverages({
     required DateTime from,
     required DateTime to,

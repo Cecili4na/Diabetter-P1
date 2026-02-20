@@ -1,5 +1,3 @@
-// lib/repositories/repository_interfaces.dart
-// Abstract interfaces for all repositories - enables mocking for tests
 
 import 'dart:typed_data';
 import '../models/models.dart';
@@ -25,18 +23,16 @@ abstract class IAuthRepository {
   /// Get current user's profile
   Future<UserProfile?> getCurrentProfile();
 
-  /// Update user profile (RF-03)
+  /// Update user profile
   Future<void> updateProfile(UserProfile profile);
 
   /// Upload profile photo to storage
   Future<String?> uploadProfilePhoto(String userId, Uint8List imageBytes);
 }
 
-/// Abstract interface for health data operations (RF-04, RF-05, RF-06)
+/// Abstract interface for health data operations
 abstract class IHealthRepository {
-  // =====================================================
-  // INSULIN (RF-05)
-  // =====================================================
+  // INSULIN
 
   Future<void> addInsulinRecord(InsulinRecord record);
 
@@ -49,9 +45,7 @@ abstract class IHealthRepository {
 
   Future<void> deleteInsulinRecord(String id);
 
-  // =====================================================
-  // GLUCOSE (RF-04)
-  // =====================================================
+  // GLUCOSE
 
   Future<void> addGlucoseRecord(GlucoseRecord record);
 
@@ -64,9 +58,7 @@ abstract class IHealthRepository {
 
   Future<void> deleteGlucoseRecord(String id);
 
-  // =====================================================
-  // EVENTS (RF-06)
-  // =====================================================
+  // EVENTS
 
   Future<void> addEventRecord(EventRecord record);
 
@@ -80,9 +72,7 @@ abstract class IHealthRepository {
 
   Future<void> deleteEventRecord(String id);
 
-  // =====================================================
-  // STATISTICS (RF-08, RF-12)
-  // =====================================================
+  // STATISTICS
 
   /// Get glucose average for a period
   Future<double?> getGlucoseAverage({
@@ -90,7 +80,7 @@ abstract class IHealthRepository {
     required DateTime to,
   });
 
-  /// Get daily glucose averages for chart (RF-08)
+  /// Get daily glucose averages for chart
   Future<Map<DateTime, double>> getDailyGlucoseAverages({
     required DateTime from,
     required DateTime to,
@@ -103,7 +93,7 @@ abstract class IHealthRepository {
   });
 }
 
-/// Abstract interface for plan/freemium operations (RF-11)
+/// Abstract interface for plan/freemium operations
 abstract class IPlanoRepository {
   /// Get all available plans
   Future<List<Plano>> getPlanos();

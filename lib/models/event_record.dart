@@ -1,5 +1,3 @@
-// lib/models/event_record.dart
-// RF-06: Register events (refeição, exercício, estresse, outros)
 
 enum EventType {
   refeicao,

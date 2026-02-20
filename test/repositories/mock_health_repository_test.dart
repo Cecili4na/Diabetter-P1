@@ -1,5 +1,3 @@
-// test/repositories/mock_health_repository_test.dart
-// Tests to verify mock repository generates valid sample data
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:diabetes_app/repositories/mocks/mock_health_repository.dart';

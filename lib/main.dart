@@ -12,13 +12,10 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     
-    // Initialize app config from environment
-    // Run with: flutter run --dart-define=MOCK_MODE=true
     AppConfig.initializeFromEnvironment();
     
     if (AppConfig.isMockMode) {
-      // Skip Supabase in mock mode
-      print('🧪 Running in MOCK MODE - no Supabase connection');
+      // Skip Supabase initialization in mock mode
     } else {
       // Production mode - initialize Supabase
       await dotenv.load(fileName: ".env");
@@ -30,8 +27,7 @@ void main() async {
 
     runApp(const MyApp());
   } catch (e, stack) {
-    print('CRITICAL ERROR: $e');
-    print(stack);
+    // Critical initialization failure — app cannot start
   }
 }
 

@@ -1,5 +1,3 @@
-// lib/services/export_service_web.dart
-// Web-specific implementation - triggers browser download
 
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;

@@ -1,10 +1,8 @@
-// lib/widgets/in_construction_dialog.dart
-// Reusable "Em Construção" dialog for features not yet implemented
 
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 
-/// Shows an "Em Construção" dialog for features not yet implemented
+/// Shows an "Under Construction" dialog for features not yet implemented
 Future<void> showInConstructionDialog(
   BuildContext context, {
   String? featureName,

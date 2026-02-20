@@ -1,5 +1,3 @@
-// lib/repositories/mocks/mock_auth_repository.dart
-// Mock implementation for testing without Supabase
 
 import 'dart:async';
 import 'dart:typed_data';
@@ -45,6 +43,7 @@ class MockAuthRepository implements IAuthRepository {
         tipoDiabetes: 'Tipo 1',
         termosAceitos: true,
         horariosMedicao: ['07:00', '12:00', '19:00', '22:00'],
+        horariosNotificacao: ['07:00', '12:00', '19:00'],
         metas: {'min': 70, 'max': 180, 'alvo': 100},
         unidadeGlicemia: 'mg/dL',
       );

@@ -1,5 +1,3 @@
-// lib/screens/safety_disclaimer_screen.dart
-// Safety disclaimer screen shown after onboarding - important medical warning
 
 import 'package:flutter/material.dart';
 import 'app_shell.dart';

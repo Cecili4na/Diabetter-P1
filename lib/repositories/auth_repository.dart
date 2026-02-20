@@ -58,6 +58,7 @@ class AuthRepository implements IAuthRepository {
       'tipo_diabetes': profile.tipoDiabetes,
       'termos_aceitos': profile.termosAceitos,
       'horarios_medicao': profile.horariosMedicao,
+      'horarios_notificacao': profile.horariosNotificacao,
       'metas': profile.metas,
       'unidade_glicemia': profile.unidadeGlicemia,
       'unidade_a1c': profile.unidadeA1c,

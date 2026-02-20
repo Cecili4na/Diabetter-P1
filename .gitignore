@@ -1,49 +1,99 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
+# =============================================================================
+# Diabetter – Production .gitignore
+# =============================================================================
 
-# IntelliJ related
+# ─── Environment & Secrets ───────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Flutter / Dart / Pub ────────────────────────────────────────────────────
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# ─── IDE – IntelliJ / Android Studio ────────────────────────────────────────
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# Flutter/Dart/Pub
-.dart_tool/
-.packages
-.pub/
-build/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
+# ─── IDE – VS Code ──────────────────────────────────────────────────────────
+.vscode/
 
-# iOS/Android Build
+# ─── iOS Build Artifacts ────────────────────────────────────────────────────
 ios/Flutter/App.framework
 ios/Flutter/Flutter.framework
 ios/Flutter/Generated.xcconfig
 ios/Flutter/app.flx
 ios/Flutter/app.zip
 ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
 ios/ServiceDefinitions.json
 ios/Runner/GeneratedPluginRegistrant.*
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+
+# ─── Android Build Artifacts ────────────────────────────────────────────────
 android/Flutter/build/
 android/app/libs/
 android/app/src/main/assets/
 android/app/debug
 android/app/profile
 android/app/release
+**/android/**/gradle-wrapper.jar
+.gradle/
+**/android/**/GeneratedPluginRegistrant.java
+**/android/**/key.properties
+*.jks
 
-# Symbols/Obfuscation
+# ─── Web Build Artifacts ────────────────────────────────────────────────────
+web/flutter_bootstrap.js
+
+# ─── macOS Build Artifacts ──────────────────────────────────────────────────
+macos/Flutter/ephemeral/
+macos/Pods/
+
+# ─── Linux Build Artifacts ──────────────────────────────────────────────────
+linux/flutter/ephemeral/
+
+# ─── Windows Build Artifacts ────────────────────────────────────────────────
+windows/flutter/ephemeral/
+
+# ─── Supabase ────────────────────────────────────────────────────────────────
+supabase/.branches
+supabase/.temp/
+
+# ─── Obfuscation / Symbols ──────────────────────────────────────────────────
 app.*.symbols
 app.*.map.json
 
-# Secrets (CRITICAL)
-.env
+# ─── Test & Coverage ────────────────────────────────────────────────────────
+coverage/
+*.lcov
+
+# ─── OS-generated Files ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# ─── Miscellaneous ──────────────────────────────────────────────────────────
+*.class
+*.log
+*.pyc
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# ─── Flutter Metadata (optional, but not needed in VCS) ─────────────────────
+.metadata

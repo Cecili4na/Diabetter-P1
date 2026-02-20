@@ -1,5 +1,3 @@
-// lib/screens/register_screen.dart
-// Modern registration screen with blue color scheme, matching login design (RF-01)
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

@@ -1,5 +1,3 @@
-// lib/screens/app_shell.dart
-// Main app shell with bottom navigation
 
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';

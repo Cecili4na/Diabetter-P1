@@ -1,11 +1,9 @@
-// lib/services/charts_service.dart
-// RF-08: Charts and graphs, RF-12: Averages
 
 import '../repositories/repository_interfaces.dart';
 import '../repositories/health_repository.dart';
 import '../models/event_record.dart';
 
-/// Service for generating chart data (RF-08)
+/// Service for generating chart data
 class ChartsService {
   final IHealthRepository _healthRepo;
 
@@ -93,7 +91,7 @@ class ChartsService {
     )).toList();
   }
 
-  /// Get period summary (RF-12 - Médias)
+  /// Get period summary with statistics
   Future<PeriodSummary> getPeriodSummary({
     required DateTime from,
     required DateTime to,

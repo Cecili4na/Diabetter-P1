@@ -1,5 +1,3 @@
-// lib/screens/login_screen.dart
-// Modern login screen with blue color scheme, Portuguese translations and password reset (RF-01)
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -245,9 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
               .rpc('check_email_exists', params: {'email_to_check': email});
           
           userExists = response == true;
-          print('Email verification result: $userExists');
         } catch (e) {
-          print('Error checking email: $e');
           // If RPC fails, show error and don't proceed
           if (mounted) Navigator.of(context).pop();
           _showError('Erro ao verificar email. Tente novamente.');

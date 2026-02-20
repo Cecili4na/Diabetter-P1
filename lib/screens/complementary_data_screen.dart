@@ -1,5 +1,3 @@
-// lib/screens/complementary_data_screen.dart
-// Optional complementary data collection after essential onboarding
 
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -22,6 +20,7 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
   final _alturaController = TextEditingController();
   final _pesoController = TextEditingController();
   List<String> _horariosMedicao = [];
+  List<String> _horariosNotificacao = [];
   bool _isLoading = false;
 
   // Avatar
@@ -35,7 +34,7 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
   static const Color _paleBlue = Color(0xFFDBEAFE);
   static const Color _veryLightBlue = Color(0xFFEFF6FF);
 
-  // Horários disponíveis
+  // Available measurement times
   static const List<String> _horariosDisponiveis = [
     'Jejum',
     'Pré-café',
@@ -121,6 +120,7 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
         altura: double.tryParse(_alturaController.text),
         peso: double.tryParse(_pesoController.text.replaceAll(',', '.')),
         horariosMedicao: _horariosMedicao,
+        horariosNotificacao: _horariosNotificacao,
         avatarUrl: avatarUrl,
       );
 
@@ -288,7 +288,7 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
 
                         const SizedBox(height: 20),
 
-                        // Horários de Medição
+                        // Measurement Times
                         _buildLabel('Horários de Medição'),
                         const SizedBox(height: 8),
                         Text(
@@ -331,6 +331,49 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
                             );
                           }).toList(),
                         ),
+
+                        const SizedBox(height: 20),
+
+                        // Email Notification Times
+                        _buildLabel('Lembretes por E-mail'),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Adicione os horários em que deseja receber lembretes de medição por e-mail',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _darkBlue.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildNotificationTimeAdder(),
+                        const SizedBox(height: 8),
+                        if (_horariosNotificacao.isEmpty)
+                          Text(
+                            'Nenhum horário adicionado.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _darkBlue.withValues(alpha: 0.5),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          )
+                        else
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: _horariosNotificacao.map((time) {
+                              return Chip(
+                                label: Text(
+                                  time,
+                                  style: const TextStyle(fontSize: 13, color: Colors.white),
+                                ),
+                                backgroundColor: _mediumBlue,
+                                deleteIconColor: Colors.white,
+                                onDeleted: () {
+                                  setState(() => _horariosNotificacao.remove(time));
+                                },
+                              );
+                            }).toList(),
+                          ),
                       ],
                     ),
                   ),
@@ -538,6 +581,79 @@ class _ComplementaryDataScreenState extends State<ComplementaryDataScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  int _selectedNotifHour = 8;
+  int _selectedNotifMinute = 0;
+
+  Widget _buildNotificationTimeAdder() {
+    return Row(
+      children: [
+        // Hour dropdown
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: _veryLightBlue,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _lightBlue.withValues(alpha: 0.5)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: _selectedNotifHour,
+                isExpanded: true,
+                items: List.generate(24, (i) => i).map((h) {
+                  return DropdownMenuItem(
+                    value: h,
+                    child: Text('${h.toString().padLeft(2, '0')}h'),
+                  );
+                }).toList(),
+                onChanged: (v) => setState(() => _selectedNotifHour = v!),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Minute dropdown
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: _veryLightBlue,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _lightBlue.withValues(alpha: 0.5)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: _selectedNotifMinute,
+                isExpanded: true,
+                items: [0, 10, 20, 30, 40, 50].map((m) {
+                  return DropdownMenuItem(
+                    value: m,
+                    child: Text(':${m.toString().padLeft(2, '0')}'),
+                  );
+                }).toList(),
+                onChanged: (v) => setState(() => _selectedNotifMinute = v!),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Add button
+        IconButton(
+          icon: Icon(Icons.add_circle, color: _mediumBlue, size: 32),
+          onPressed: () {
+            final time = '${_selectedNotifHour.toString().padLeft(2, '0')}:${_selectedNotifMinute.toString().padLeft(2, '0')}';
+            if (!_horariosNotificacao.contains(time)) {
+              setState(() {
+                _horariosNotificacao.add(time);
+                _horariosNotificacao.sort();
+              });
+            }
+          },
+        ),
+      ],
     );
   }
 }

@@ -1,5 +1,3 @@
-// lib/screens/record_screen.dart
-// Screen for recording glucose, insulin, and events (RF-04, RF-05, RF-06)
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

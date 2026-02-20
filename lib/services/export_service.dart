@@ -1,5 +1,3 @@
-// lib/services/export_service.dart
-// RF-10: Export data as PDF
 
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;

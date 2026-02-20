@@ -1,5 +1,3 @@
-// lib/screens/dashboard_screen.dart
-// Dashboard/Home screen with glucose summary and quick actions
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';

@@ -1,12 +1,9 @@
-// lib/models/plano.dart
-// RF-11: Freemium subscription plans
-
 class Plano {
   final String id;
   final String nome;
   final String? descricao;
-  final int? limiteRegistrosMes;      // null = unlimited
-  final int? limiteExportacoesMes;    // null = unlimited
+  final int? limiteRegistrosMes;
+  final int? limiteExportacoesMes;
   final double precoMensal;
   final bool ativo;
 

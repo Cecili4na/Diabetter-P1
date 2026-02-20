@@ -1,5 +1,3 @@
-// lib/config/app_config.dart
-// Configuration for switching between production and mock modes
 
 import '../repositories/repository_interfaces.dart';
 import '../repositories/auth_repository.dart';

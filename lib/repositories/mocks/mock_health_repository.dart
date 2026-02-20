@@ -1,5 +1,3 @@
-// lib/repositories/mocks/mock_health_repository.dart
-// Mock implementation with 30 days of realistic sample data
 
 import 'dart:math';
 import '../repository_interfaces.dart';
@@ -138,9 +136,8 @@ class MockHealthRepository implements IHealthRepository {
     }
   }
 
-  // =====================================================
-  // INSULIN (RF-05)
-  // =====================================================
+
+  // INSULIN
 
   @override
   Future<void> addInsulinRecord(InsulinRecord record) async {
@@ -191,9 +188,8 @@ class MockHealthRepository implements IHealthRepository {
     _insulinRecords.removeWhere((r) => r.id == id);
   }
 
-  // =====================================================
-  // GLUCOSE (RF-04)
-  // =====================================================
+
+  // GLUCOSE
 
   @override
   Future<void> addGlucoseRecord(GlucoseRecord record) async {
@@ -243,9 +239,8 @@ class MockHealthRepository implements IHealthRepository {
     _glucoseRecords.removeWhere((r) => r.id == id);
   }
 
-  // =====================================================
-  // EVENTS (RF-06)
-  // =====================================================
+
+  // EVENTS
 
   @override
   Future<void> addEventRecord(EventRecord record) async {
@@ -300,9 +295,8 @@ class MockHealthRepository implements IHealthRepository {
     _eventRecords.removeWhere((r) => r.id == id);
   }
 
-  // =====================================================
-  // STATISTICS (RF-08, RF-12)
-  // =====================================================
+
+  // STATISTICS
 
   @override
   Future<double?> getGlucoseAverage({

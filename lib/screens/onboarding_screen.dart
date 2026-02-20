@@ -1,5 +1,3 @@
-// lib/screens/onboarding_screen.dart
-// Onboarding wizard for new users - collects essential profile data
 
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
@@ -439,14 +437,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   (value) {
                     setState(() {
                       _metaMin = value;
-                      // Ajusta alvo se necessário
-                      if (_metaAlvo <= _metaMin) {
-                        _metaAlvo = _metaMin + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
-                      }
-                      // Ajusta máximo se necessário
-                      if (_metaMax <= _metaAlvo) {
-                        _metaMax = _metaAlvo + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
-                      }
                     });
                   },
                 ),
@@ -460,14 +450,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   (value) {
                     setState(() {
                       _metaAlvo = value;
-                      // Ajusta mínimo se necessário
-                      if (_metaMin >= _metaAlvo) {
-                        _metaMin = _metaAlvo - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
-                      }
-                      // Ajusta máximo se necessário
-                      if (_metaMax <= _metaAlvo) {
-                        _metaMax = _metaAlvo + (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
-                      }
                     });
                   },
                 ),
@@ -481,14 +463,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   (value) {
                     setState(() {
                       _metaMax = value;
-                      // Ajusta alvo se necessário
-                      if (_metaAlvo >= _metaMax) {
-                        _metaAlvo = _metaMax - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
-                      }
-                      // Ajusta mínimo se necessário
-                      if (_metaMin >= _metaAlvo) {
-                        _metaMin = _metaAlvo - (_unidadeGlicemia == 'mmol/L' ? 0.5 : 10);
-                      }
                     });
                   },
                 ),

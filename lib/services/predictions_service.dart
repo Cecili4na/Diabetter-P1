@@ -1,12 +1,10 @@
-// lib/services/predictions_service.dart
-// RF-09: Simple predictions (beta, with disclaimer)
 
 import 'dart:math';
 import '../repositories/repository_interfaces.dart';
 import '../repositories/health_repository.dart';
 import '../models/models.dart';
 
-/// Simple prediction service using moving averages (RF-09)
+/// Simple prediction service using moving averages.
 /// 
 /// DISCLAIMER: These predictions are for informational purposes only 
 /// and should NOT be used for medical decisions. Always consult your 

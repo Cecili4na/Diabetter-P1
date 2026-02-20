@@ -3,7 +3,7 @@ import '../services/supabase_service.dart';
 import '../models/plano.dart';
 import 'repository_interfaces.dart';
 
-/// RF-11: Freemium plan management
+/// Freemium plan management
 class PlanoRepository implements IPlanoRepository {
   final SupabaseClient _client = SupabaseService().client;
 

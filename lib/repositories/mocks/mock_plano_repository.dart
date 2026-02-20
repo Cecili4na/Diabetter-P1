@@ -1,5 +1,3 @@
-// lib/repositories/mocks/mock_plano_repository.dart
-// Mock implementation for freemium plan testing
 
 import '../repository_interfaces.dart';
 import '../../models/plano.dart';

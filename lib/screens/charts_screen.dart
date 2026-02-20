@@ -1,5 +1,3 @@
-// lib/screens/charts_screen.dart
-// Charts and statistics screen (RF-08, RF-12)
 
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';

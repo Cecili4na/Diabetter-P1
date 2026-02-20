@@ -1,5 +1,3 @@
-// lib/config/app_theme.dart
-// Shared design system for Diabetter
 
 import 'package:flutter/material.dart';
 

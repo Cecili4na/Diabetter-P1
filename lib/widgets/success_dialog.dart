@@ -1,5 +1,3 @@
-// lib/widgets/success_dialog.dart
-// Animated success dialog with checkmark animation
 
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';

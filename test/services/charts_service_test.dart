@@ -1,5 +1,3 @@
-// test/services/charts_service_test.dart
-// Unit tests for ChartsService using mock repository
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:diabetes_app/services/charts_service.dart';

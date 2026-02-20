@@ -1,25 +1,24 @@
-// lib/models/profile.dart
+
 class UserProfile {
   final String id;
   final String? nome;
   final String? email;
   final String? tipoDiabetes;
   final bool termosAceitos;
-  final List<String> horariosMedicao;  // RF-03: measurement times
-  final Map<String, dynamic> metas;     // RF-03: {min, max, alvo}
-  final String unidadeGlicemia;         // mg/dL or mmol/L
+  final List<String> horariosMedicao;
+  final List<String> horariosNotificacao;
+  final Map<String, dynamic> metas;
+  final String unidadeGlicemia;
 
-  // Novos campos - Onboarding essencial
-  final String unidadeA1c;              // '%' ou 'mmol/mol'
+  final String unidadeA1c;
   final String? tipoTratamento;         // 'insulina', 'comprimidos', 'ambos', 'nenhum'
   final bool onboardingCompleto;
 
-  // Novos campos - Dados complementares
   final DateTime? dataNascimento;
-  final double? altura;                 // cm
-  final double? peso;                   // kg
-  final String? sexo;                   // 'masculino', 'feminino', 'outro', 'prefiro_nao_informar'
-  final String? avatarUrl;              // URL da foto de perfil no Supabase Storage
+  final double? altura;
+  final double? peso;
+  final String? sexo;
+  final String? avatarUrl;
 
   UserProfile({
     required this.id,
@@ -28,6 +27,7 @@ class UserProfile {
     this.tipoDiabetes,
     this.termosAceitos = false,
     this.horariosMedicao = const [],
+    this.horariosNotificacao = const [],
     this.metas = const {'min': 70, 'max': 180, 'alvo': 100},
     this.unidadeGlicemia = 'mg/dL',
     this.unidadeA1c = '%',
@@ -48,6 +48,9 @@ class UserProfile {
       tipoDiabetes: json['tipo_diabetes'],
       termosAceitos: json['termos_aceitos'] ?? false,
       horariosMedicao: (json['horarios_medicao'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList() ?? [],
+      horariosNotificacao: (json['horarios_notificacao'] as List<dynamic>?)
           ?.map((e) => e.toString())
           .toList() ?? [],
       metas: (json['metas'] as Map<String, dynamic>?) ??
@@ -74,6 +77,7 @@ class UserProfile {
       'tipo_diabetes': tipoDiabetes,
       'termos_aceitos': termosAceitos,
       'horarios_medicao': horariosMedicao,
+      'horarios_notificacao': horariosNotificacao,
       'metas': metas,
       'unidade_glicemia': unidadeGlicemia,
       'unidade_a1c': unidadeA1c,
@@ -93,6 +97,7 @@ class UserProfile {
     String? tipoDiabetes,
     bool? termosAceitos,
     List<String>? horariosMedicao,
+    List<String>? horariosNotificacao,
     Map<String, dynamic>? metas,
     String? unidadeGlicemia,
     String? unidadeA1c,
@@ -111,6 +116,7 @@ class UserProfile {
       tipoDiabetes: tipoDiabetes ?? this.tipoDiabetes,
       termosAceitos: termosAceitos ?? this.termosAceitos,
       horariosMedicao: horariosMedicao ?? this.horariosMedicao,
+      horariosNotificacao: horariosNotificacao ?? this.horariosNotificacao,
       metas: metas ?? this.metas,
       unidadeGlicemia: unidadeGlicemia ?? this.unidadeGlicemia,
       unidadeA1c: unidadeA1c ?? this.unidadeA1c,

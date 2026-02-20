@@ -1,5 +1,3 @@
-// lib/screens/profile_screen.dart
-// User profile and settings screen (RF-03)
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,7 +22,7 @@ class ProfileScreenState extends State<ProfileScreen> {
 
   final _imagePicker = ImagePicker();
 
-  // Horários disponíveis para medição
+  // Available measurement times
   static const List<String> _horariosDisponiveis = [
     'Jejum',
     'Pré-café',
@@ -903,8 +901,8 @@ class ProfileScreenState extends State<ProfileScreen> {
       decoration: AppDecorations.card,
       child: Column(
         children: [
-          _buildSettingsItem(Icons.notifications_outlined, 'Notificações', null, () {
-            showInConstructionDialog(context, featureName: 'Notificações');
+          _buildSettingsItem(Icons.notifications_outlined, 'Notificações', _notificacoesSubtitle, () {
+            _showNotificationsDialog();
           }),
           const Divider(height: 1),
           _buildSettingsItem(Icons.schedule, 'Horários de Medição', horariosSubtitle, _showMeasurementTimesDialog),
@@ -912,7 +910,7 @@ class ProfileScreenState extends State<ProfileScreen> {
           _buildSettingsItem(Icons.download, 'Exportar Dados', null, _exportData),
           const Divider(height: 1),
           _buildSettingsItem(Icons.help_outline, 'Ajuda', null, () {
-            showInConstructionDialog(context, featureName: 'Ajuda');
+            _showHelpDialog();
           }),
         ],
       ),
@@ -1001,6 +999,210 @@ class ProfileScreenState extends State<ProfileScreen> {
         }
       }
     }
+  }
+
+  String get _notificacoesSubtitle {
+    final times = _profile?.horariosNotificacao ?? [];
+    if (times.isEmpty) return 'Nenhum horário configurado';
+    if (times.length <= 3) return times.join(', ');
+    return '${times.length} horários configurados';
+  }
+
+  Future<void> _showNotificationsDialog() async {
+    if (_profile == null) return;
+
+    List<String> selected = List.from(_profile!.horariosNotificacao);
+    int selectedHour = 8;
+    int selectedMinute = 0;
+
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Notificações por E-mail'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Adicione os horários em que deseja receber lembretes de medição por e-mail:',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  // Hour + Minute dropdowns + Add button
+                  Row(
+                    children: [
+                      // Hour dropdown
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: selectedHour,
+                          decoration: InputDecoration(
+                            labelText: 'Hora',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          items: List.generate(24, (i) => i).map((h) {
+                            return DropdownMenuItem(
+                              value: h,
+                              child: Text('${h.toString().padLeft(2, '0')}h'),
+                            );
+                          }).toList(),
+                          onChanged: (v) => setDialogState(() => selectedHour = v!),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Minute dropdown
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: selectedMinute,
+                          decoration: InputDecoration(
+                            labelText: 'Min',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          items: [0, 10, 20, 30, 40, 50].map((m) {
+                            return DropdownMenuItem(
+                              value: m,
+                              child: Text(':${m.toString().padLeft(2, '0')}'),
+                            );
+                          }).toList(),
+                          onChanged: (v) => setDialogState(() => selectedMinute = v!),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Add button
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: AppColors.primaryBlue, size: 32),
+                        onPressed: () {
+                          final time = '${selectedHour.toString().padLeft(2, '0')}:${selectedMinute.toString().padLeft(2, '0')}';
+                          if (!selected.contains(time)) {
+                            setDialogState(() {
+                              selected.add(time);
+                              selected.sort();
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // List of added times
+                  if (selected.isEmpty)
+                    const Text(
+                      'Nenhum horário adicionado.',
+                      style: TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
+                    )
+                  else
+                    ...selected.map((time) => ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.notifications_active, color: AppColors.primaryBlue, size: 20),
+                      title: Text(time, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 22),
+                        onPressed: () => setDialogState(() => selected.remove(time)),
+                      ),
+                    )),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CANCELAR'),
+            ),
+            ElevatedButton(
+              style: AppButtonStyles.primary,
+              onPressed: () => Navigator.pop(context, selected),
+              child: const Text('SALVAR'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null) {
+      result.sort();
+      final updatedProfile = _profile!.copyWith(
+        horariosNotificacao: result,
+      );
+
+      try {
+        await AppConfig.instance.authRepository.updateProfile(updatedProfile);
+        await _loadProfile();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Notificações atualizadas!'), backgroundColor: AppColors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Ajuda e Suporte'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Precisa de ajuda com o Diabetter?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Em caso de dúvidas, problemas técnicos ou sugestões, entre em contato com nossa equipe de suporte através do e-mail abaixo:',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.3)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.email, color: AppColors.primaryBlue),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: SelectableText(
+                      'support@diabetter.com',
+                      style: TextStyle(
+                        color: AppColors.primaryBlue,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('FECHAR'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSettingsItem(IconData icon, String label, String? subtitle, VoidCallback onTap) {
