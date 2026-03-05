@@ -269,7 +269,7 @@ class DashboardScreenState extends State<DashboardScreen> {
           child: _buildMetricCard(
             'Medições',
             '${_summary?.glucoseCount ?? 0}',
-            'registros',
+            'registros (30d)',
             Icons.edit_note,
             AppColors.lightGreen,
           ),
