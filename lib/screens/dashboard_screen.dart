@@ -169,10 +169,6 @@ class DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
         ],
       ),
     );
