@@ -1,236 +1,112 @@
 # Diabetter
 
-Aplicativo multiplataforma para **controle e acompanhamento de diabetes**, desenvolvido com [Flutter](https://flutter.dev/) e [Supabase](https://supabase.com/).
+> Aplicação multiplataforma para registro, visualização e predição de dados glicêmicos — voltada ao contexto brasileiro de automonitoramento manual do diabetes.
 
-> **Status do projeto:** em desenvolvimento ativo · versão 1.0.0
+📄 **Paper:** [Diabetter-v2.pdf](Diabetter-v2.pdf) ·
+🌐 **App:** <https://diabetter-p1.vercel.app/> ·
+🎬 **Demo:** <http://tiny.cc/diabetter>
 
----
-
-## Sumário
-
-- [Visão Geral](#visão-geral)
-- [Funcionalidades](#funcionalidades)
-- [Arquitetura do Projeto](#arquitetura-do-projeto)
-- [Pré-requisitos](#pré-requisitos)
-- [Configuração do Ambiente](#configuração-do-ambiente)
-- [Executando o Projeto](#executando-o-projeto)
-- [Testes](#testes)
-- [Plataformas Suportadas](#plataformas-suportadas)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
+Repositório que acompanha a submissão do artigo *"Diabetter: A Cross-Platform Application for Glycemic Tracking and Visualization"* (UFCG).
 
 ---
 
-## Visão Geral
+## 🎥 Vídeo de apresentação
 
-O **Diabetter** permite que pessoas com diabetes registrem eventos de saúde, visualizem gráficos e tendências, configurem metas glicêmicas, exportem relatórios em PDF e recebam notificações.
+> _Em breve._ O vídeo de apresentação do trabalho será disponibilizado em `docs/media/demo.mp4` e/ou linkado a partir desta seção.
 
-O backend é totalmente serverless, utilizando **Supabase** para autenticação, banco de dados (PostgreSQL), Row-Level Security (RLS), Edge Functions e agendamento de cron jobs.
+---
+
+## Sobre o trabalho
+
+O diabetes mellitus afeta mais de 20 milhões de brasileiros e impacta significativamente o sistema de saúde e a vida dos pacientes. Apesar do avanço da digitalização em saúde, soluções acessíveis e integradas para o autocuidado ainda são escassas: muitos pacientes seguem dependendo de cadernetas em papel para registrar glicemia, insulina e eventos relacionados, o que leva à perda de dados e à baixa adesão. Monitores contínuos de glicose (CGM) são caros e pouco acessíveis no SUS, e os principais aplicativos disponíveis (MySugr, GlucoseBuddy) restringem funcionalidades-chave — como exportação de relatórios em PDF — a planos pagos e não oferecem interface em português.
+
+**Diabetter** é um MVP multiplataforma (Flutter + Supabase) projetado para apoiar o automonitoramento de pessoas com diabetes que dependem de entrada manual de dados. O sistema oferece registro de glicemia e insulina, gráficos de tendência interativos, predição glicêmica via média móvel ponderada, notificações personalizadas e exportação de relatórios em PDF — com isolamento estrito de dados via Row-Level Security no banco e funcionalidades essenciais disponíveis no plano gratuito.
+
+---
+
+## ⚠️ Aviso médico
+
+> **Diabetter é uma ferramenta informacional de apoio ao automonitoramento e NÃO substitui orientação, diagnóstico ou tratamento médico.** As predições glicêmicas são projeções estatísticas (média móvel ponderada sobre as últimas 24h) e **não devem ser usadas para decisões clínicas**. Em emergências, ligue **192 (SAMU)**. Consulte os [Termos de Uso](TERMOS_DE_USO.md).
+
+---
+
+## Autores
+
+**Universidade Federal de Campina Grande (UFCG)** — Campina Grande/PB, Brasil
+
+- André de Figueirêdo C. Cunha — `andre.figueiredo.castro.cunha@ccc.ufcg.edu.br`
+- Ana Cecília de O. Farias — `ana.cecilia.farias.oliveira@ccc.ufcg.edu.br`
+- Ana Virgínia de S. Nery — `ana.virginia.souza.nery@ccc.ufcg.edu.br`
+- Gabriela Virginia M. Mendes — `gabriela.virginia.melo.mendes@ccc.ufcg.edu.br`
+- Guilherme D. Boia de Albuquerque - `guilherme.dantas.boia.albuquerque@ccc.ufcg.edu.br`
+- Carlos Eduardo S. Pires — `cesp@dsc.ufcg.edu.br`
+
+---
+
+## Arquitetura
+
+O sistema adota uma arquitetura cliente-servidor em quatro camadas, construída inteiramente sobre tecnologias open-source, com Repository Pattern e injeção de dependência via singleton `AppConfig`. Implementações *mock* dos repositórios permitem executar a aplicação completa sem backend, facilitando testes e demonstração.
+
+```mermaid
+flowchart TD
+  UI["UI Layer — Screens & Widgets"]
+  Svc["Services Layer — Business Logic<br/>predição glicêmica · geração de PDF"]
+  Repo["Repository Layer — Data Abstraction<br/>interfaces + mocks"]
+  Data[("Data Layer — Supabase<br/>Auth · PostgreSQL + RLS · Storage")]
+  UI --> Svc --> Repo --> Data
+```
+
+- **Frontend:** Flutter — Android, iOS, Web (PWA), Linux, macOS, Windows
+- **Backend:** Supabase — PostgreSQL com Row-Level Security, autenticação via JWT, Edge Functions e `pg_cron` para notificações por email
+- **Sem servidor de aplicação dedicado** — toda regra de acesso vive no banco, reduzindo custo operacional e superfície de ataque
 
 ---
 
 ## Funcionalidades
 
-| Funcionalidade | Descrição |
-|---|---|
-| **Autenticação** | Cadastro e login com e-mail/senha via Supabase Auth |
-| **Registro de Eventos** | Lançamento de glicemia, insulina, alimentação e atividade física |
-| **Dashboard** | Visão consolidada dos registros mais recentes |
-| **Gráficos** | Visualização de tendências glicêmicas ao longo do tempo |
-| **Perfil** | Configuração de metas glicêmicas e horários de notificação |
-| **Onboarding** | Fluxo guiado de boas-vindas e configuração inicial |
-| **Exportação PDF** | Geração e compartilhamento de relatórios em PDF |
-| **Notificações** | Lembretes via e-mail acionados por Supabase Edge Functions |
-| **Predições** | Serviço de projeções baseado no histórico de registros |
+- **Onboarding clínico** — unidade glicêmica (mg/dL ou mmol/L), metas, tipo de tratamento e horários de notificação. Aviso médico obrigatório antes do acesso. (`lib/screens/onboarding_screen.dart`)
+- **Registro de glicemia, insulina e eventos** — validação clínica (glicemia entre 40-600 mg/dL); contagem de quota mensal via RPC PostgreSQL atômica. (`lib/screens/record_screen.dart`)
+- **Gráficos e estatísticas** — séries de 7, 14 ou 30 dias, *time-in-range* (70-180 mg/dL), médias, mínimos e máximos, renderizados via `CustomPainter`. (`lib/screens/charts_screen.dart`)
+- **Predição de tendência** — média móvel ponderada sobre as últimas 24h, classificação em cinco níveis (subida rápida, subida lenta, estável, queda lenta, queda rápida) e *confidence score* baseado no desvio padrão e na recência das medições. (`lib/services/predictions_service.dart`)
+- **Exportação em PDF** — relatórios de 7, 14, 30 ou 45 dias, com compilação condicional para web e mobile e compartilhamento via `share_plus`. (`lib/services/export_service*.dart`)
+- **Notificações por email** — Edge Function agendada por `pg_cron`. (`supabase/functions/send_email_notifications`)
+- **Isolamento estrito de dados** — políticas RLS por usuário em todas as tabelas, tráfego HTTPS, autenticação por JWT. (`supabase/rls_policies.sql`)
+- **Multiplataforma** — builds para Android, iOS, Web (PWA), Linux, macOS e Windows a partir de uma única base de código.
+- **Modelo freemium acessível** — 30 registros/mês e 2 exportações de PDF gratuitos, *sem paywall em features clínicas core*.
 
 ---
 
-## Arquitetura do Projeto
+## Estrutura do repositório
 
 ```
-Diabetter-P1/
-├── lib/
-│   ├── main.dart                    # Ponto de entrada da aplicação
-│   ├── config/
-│   │   ├── app_config.dart          # Configurações gerais (mock/produção)
-│   │   └── app_theme.dart           # Tema e design system
-│   ├── models/
-│   │   ├── models.dart              # Modelos de domínio (User, GlucoseRecord…)
-│   │   ├── event_record.dart        # Modelo de evento de saúde
-│   │   └── plano.dart               # Modelo de plano alimentar
-│   ├── repositories/
-│   │   ├── repository_interfaces.dart  # Contratos (interfaces) dos repositórios
-│   │   ├── auth_repository.dart     # Implementação – autenticação
-│   │   ├── health_repository.dart   # Implementação – registros de saúde
-│   │   ├── plano_repository.dart    # Implementação – planos alimentares
-│   │   └── mocks/                   # Implementações mock para desenvolvimento
-│   ├── screens/
-│   │   ├── app_shell.dart           # Shell com navegação por abas
-│   │   ├── login_screen.dart        # Tela de login
-│   │   ├── register_screen.dart     # Tela de cadastro
-│   │   ├── onboarding_screen.dart   # Fluxo de onboarding
-│   │   ├── dashboard_screen.dart    # Dashboard principal
-│   │   ├── record_screen.dart       # Registro de eventos
-│   │   ├── charts_screen.dart       # Gráficos e tendências
-│   │   ├── profile_screen.dart      # Perfil e configurações
-│   │   ├── complementary_data_screen.dart  # Dados complementares
-│   │   └── safety_disclaimer_screen.dart   # Aviso de segurança
-│   ├── services/
-│   │   ├── supabase_service.dart    # Inicialização do Supabase
-│   │   ├── charts_service.dart      # Lógica de geração de gráficos
-│   │   ├── predictions_service.dart # Serviço de predições
-│   │   ├── export_service.dart      # Exportação de relatórios (PDF)
-│   │   ├── export_service_io.dart   # Exportação – plataformas nativas
-│   │   ├── export_service_web.dart  # Exportação – plataforma web
-│   │   └── export_service_stub.dart # Stub para compilação condicional
-│   └── widgets/
-│       ├── success_dialog.dart      # Diálogo de sucesso reutilizável
-│       └── in_construction_dialog.dart  # Diálogo de recurso em construção
-├── test/
-│   ├── widget_test.dart             # Teste base de widgets
-│   ├── repositories/               # Testes de repositórios mock
-│   └── services/                   # Testes de serviços (charts, predictions)
-├── supabase/
-│   ├── schema.sql                   # Schema do banco de dados
-│   ├── migrations_v2.sql            # Migrações
-│   ├── rls_policies.sql             # Políticas de Row-Level Security
-│   ├── triggers.sql                 # Triggers do banco
-│   ├── cron_notifications.sql       # Jobs de notificação agendados
-│   └── functions/                   # Supabase Edge Functions
-├── android/                         # Projeto Android nativo
-├── ios/                             # Projeto iOS nativo
-├── web/                             # Projeto Web (PWA)
-├── linux/                           # Projeto Linux nativo
-├── macos/                           # Projeto macOS nativo
-├── windows/                         # Projeto Windows nativo
-├── pubspec.yaml                     # Dependências e configuração do projeto
-├── analysis_options.yaml            # Regras de lint do Dart
-├── .env.example                     # Template de variáveis de ambiente
-├── POLITICA_DE_PRIVACIDADE.md       # Política de privacidade
-└── TERMOS_DE_USO.md                 # Termos de uso
+lib/         · código Flutter (screens, services, repositories, models)
+supabase/    · schema SQL, políticas RLS, triggers, cron, Edge Functions
+test/        · testes de repositórios e serviços
+docs/        · documentação técnica (setup, mídia)
 ```
 
-### Padrões Adotados
+---
 
-- **Repository Pattern** — interfaces em `repository_interfaces.dart` com implementações concretas (Supabase) e mocks intercambiáveis.
-- **Separação por camada** — `models/`, `repositories/`, `services/`, `screens/`, `widgets/`.
-- **Compilação condicional** — `export_service_io.dart` / `export_service_web.dart` com stub para suporte multiplataforma.
-- **Configuração centralizada** — modo mock vs. produção controlado em `app_config.dart`.
+## Reprodutibilidade
+
+Para revisores e desenvolvedores que queiram executar o projeto localmente, ver **[docs/SETUP.md](docs/SETUP.md)**.
+
+Artefatos de backend disponíveis para inspeção:
+
+- `supabase/schema.sql` — esquema do banco
+- `supabase/rls_policies.sql` — políticas de isolamento por usuário
+- `supabase/triggers.sql`, `supabase/cron_notifications.sql` — lógica em banco
+- `supabase/functions/send_email_notifications/` — Edge Function de notificação
 
 ---
 
-## Pré-requisitos
+## Privacidade e termos
 
-| Ferramenta | Versão Mínima |
-|---|---|
-| [Flutter SDK](https://docs.flutter.dev/get-started/install) | 3.0.0 |
-| [Dart SDK](https://dart.dev/get-dart) | ≥ 3.0.0, < 4.0.0 (incluso no Flutter) |
-| Android Studio **ou** Xcode | Última versão estável |
-| Conta no [Supabase](https://supabase.com/) | — |
-
----
-
-## Configuração do Ambiente
-
-1. **Clone o repositório:**
-
-   ```bash
-   git clone https://github.com/Cecili4na/Diabetter-P1.git
-   cd Diabetter-P1
-   ```
-
-2. **Crie o arquivo de variáveis de ambiente:**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edite `.env` com suas credenciais do Supabase:
-
-   ```dotenv
-   SUPABASE_URL=https://SEU_PROJETO.supabase.co
-   SUPABASE_ANON_KEY=sua_anon_key_aqui
-   ```
-
-3. **Instale as dependências:**
-
-   ```bash
-   flutter pub get
-   ```
-
-4. **Verifique a instalação:**
-
-   ```bash
-   flutter doctor
-   ```
-
----
-
-## Executando o Projeto
-
-```bash
-# Listar dispositivos disponíveis
-flutter devices
-
-# Executar no dispositivo/emulador padrão
-flutter run
-
-# Executar na web (Chrome)
-flutter run -d chrome
-
-# Build de produção para web
-flutter build web
-```
-
-> **Modo Mock:** para desenvolvimento local sem conexão ao Supabase, defina `useMockRepositories = true` em `lib/config/app_config.dart`.
-
----
-
-## Testes
-
-```bash
-# Executar todos os testes
-flutter test
-
-# Executar com relatório de cobertura
-flutter test --coverage
-
-# Executar um arquivo de teste específico
-flutter test test/services/charts_service_test.dart
-```
-
-### Testes Disponíveis
-
-| Arquivo | Cobertura |
-|---|---|
-| `test/services/charts_service_test.dart` | Serviço de gráficos |
-| `test/services/predictions_service_test.dart` | Serviço de predições |
-| `test/repositories/mock_health_repository_test.dart` | Repositório mock de saúde |
-
-
-## Contribuição
-
-1. Crie um fork do repositório.
-2. Crie uma branch para sua feature: `git checkout -b feature/minha-feature`.
-3. Faça commit das alterações: `git commit -m 'feat: descrição da alteração'`.
-4. Envie para o repositório remoto: `git push origin feature/minha-feature`.
-5. Abra um **Pull Request** descrevendo a mudança.
-
-### Convenção de Commits
-
-Este projeto segue o padrão [Conventional Commits](https://www.conventionalcommits.org/):
-
-| Prefixo | Uso |
-|---|---|
-| `feat:` | Nova funcionalidade |
-| `fix:` | Correção de bug |
-| `docs:` | Alteração em documentação |
-| `refactor:` | Refatoração sem mudança de comportamento |
-| `test:` | Adição ou modificação de testes |
-| `chore:` | Tarefas de manutenção |
+- [Política de Privacidade](POLITICA_DE_PRIVACIDADE.md) — conformidade com a LGPD
+- [Termos de Uso](TERMOS_DE_USO.md) — limitações de responsabilidade
 
 ---
 
 ## Licença
 
-Este projeto é de uso privado. Consulte os mantenedores para informações sobre licenciamento.
+Uso restrito. Para uso acadêmico ou licenciamento, contatar os autores.
